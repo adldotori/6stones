@@ -1,0 +1,12 @@
+-- input: exit 
+-- input: quit 
+-- input: quit 
+-- input: quit 
+-- input: START 
+-- output: OK 
+-- input: BEGIN 9,9 
+-- output: 12,8 
+-- input: TURN 1,1 2,2 
+-- output: 9,13 6,3 
+-- input: exit 
+-- input: quit 
