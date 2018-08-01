@@ -1,5 +1,14 @@
-﻿Build started 2018-07-09 오후 1:45:25.
-
-Build succeeded.
-
-Time Elapsed 00:00:00.03
+﻿  AI_Algorithm_Code.cpp
+c:\users\taeho\source\repos\6stones\samsunggo_ai_code_배포\ai_algorithm_code.cpp(472): warning C4244: '인수': 'time_t'에서 'unsigned int'(으)로 변환하면서 데이터가 손실될 수 있습니다.
+  Connect6Algo.cpp
+c:\users\taeho\source\repos\6stones\samsunggo_ai_code_배포\connect6algo.cpp(189): warning C4996: 'fopen': This function or variable may be unsafe. Consider using fopen_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+  c:\program files (x86)\windows kits\10\include\10.0.17134.0\ucrt\stdio.h(208): note: 'fopen' 선언을 참조하십시오.
+  코드를 생성하고 있습니다...
+c:\users\taeho\source\repos\6stones\samsunggo_ai_code_배포\connect6algo.cpp(38): warning C4793: 'setLine': 함수가 네이티브로 컴파일되었습니다.
+  	/clr에서는 vararg가 지원되지 않습니다.
+c:\users\taeho\source\repos\6stones\samsunggo_ai_code_배포\connect6algo.cpp(41): warning C4793: 'setLine': 함수가 네이티브로 컴파일되었습니다.
+  	관리 코드에서 지원되지 않는 내장 함수가 있습니다.
+c:\users\taeho\source\repos\6stones\samsunggo_ai_code_배포\connect6algo.cpp(45): warning C4793: 'setLine': 함수가 네이티브로 컴파일되었습니다.
+  	관리 코드에서 지원되지 않는 내장 함수가 있습니다.
+  .NETFramework,Version=v4.5.AssemblyAttributes.cpp
+  SamsungGo_AI_Code_배포.vcxproj -> C:\Users\Taeho\Source\Repos\6stones\Release\SamsungGo_AI_Code_배포.exe
