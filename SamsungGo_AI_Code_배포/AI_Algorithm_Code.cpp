@@ -1,5 +1,5 @@
 // Samsung Go Tournament Form C (g++-4.8.3)
-
+//test commit
 /*
 [AI 内靛 累己 规过]
 

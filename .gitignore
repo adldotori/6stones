@@ -1,3 +1,6 @@
+*.VC.opendb
+*.opendb
+
 # Prerequisites
 *.d
 
