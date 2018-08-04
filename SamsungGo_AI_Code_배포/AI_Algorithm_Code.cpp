@@ -96,6 +96,10 @@ const point UNDEFINED = { -1, -1 };
 // player == 0 <=> our point
 int cell_count[2][19][19][4];
 
+//store the distance from the center of stones
+//sort by this array when make new order
+double distFromMid[BOARD_SIZE][BOARD_SIZE];
+
 point p1, p2;
 
 #ifdef SECRET_AGENCY_DEBUG_MODE
@@ -206,34 +210,30 @@ int compute_score(point p)
 	{
 		int our_count = 0; // the number of 'our' (subjective) stones
 		int opp_count = 0; // the number of opponent's stones
-		int blk_count = 0; // the number of blocks
+		int blk_count = 0; // the number of block's stones
 		int our_count_prev = 0; // the number of 'our' stones when board[x][y] == 0
 		int line[2 * LENGTH + 1] = {}; // the board status of the line segment
 
 									   // computing the line segment
-		int nx = x + dx[dir] * (-LENGTH);
-		int ny = y + dy[dir] * (-LENGTH);
 		for (int k = -LENGTH; k <= LENGTH; k++)
 		{
+			int nx = x + dx[dir] * k;
+			int ny = y + dy[dir] * k;
 			int& cur_color = line[LENGTH - k];
 
 			// we assume to be a blocking cell
 			// if the cell is invalid
-			cur_color = 3;
+			cur_color = 4;
 			if (is_valid(nx, ny))
 				cur_color = board[nx][ny];
-
-			nx = nx + dx[dir];
-			ny = ny + dy[dir];
 		}
 
 		// just pass the seven mok for now
 		if (isSevenMok(line, p.c))
 		{
-			diff -= 2500;
+			diff -= 10000;
 			continue;
 		}
-
 		// calculate the difference
 		for (int k = -LENGTH + 1; k <= LENGTH - 1; k++)
 		{
@@ -254,21 +254,17 @@ int compute_score(point p)
 
 			if (k >= 0)
 			{
-				// counting is meaningless if there exists a blocking
-				if (blk_count == 0)
+				// If there are currently no stones, calculate the difference
+				if (opp_count == 0)
 				{
-					// If there are currently no stones, calculate the difference
-					if (opp_count == 0)
-					{
-						diff = diff + my_score[our_count] * parity;
-						diff = diff - my_score[our_count_prev] * parity;
-					}
-					// note that our_count > 0
-					if (our_count_prev == 0 && opp_count)
-					{
-						diff = diff + op_score[opp_count] * parity;
-						diff = diff - op_score[opp_count - 1] * parity;
-					}
+					diff = diff + my_score[our_count+blk_count] * parity;
+					diff = diff - my_score[our_count_prev+blk_count] * parity;
+				}
+				// note that our_count > 0
+				if (our_count_prev == 0 && opp_count)
+				{
+					diff = diff + op_score[opp_count+blk_count] * parity;
+					diff = diff - op_score[opp_count + blk_count - 1] * parity;
 				}
 
 				// erase the leftmost stone (similar to deque)
@@ -305,6 +301,7 @@ void update_board()
 }
 
 //test
+
 std::vector<point> order;	
 // alpha-beta by the difference and a bit of greedy
 int alphabeta(int depth, const int player, const int player_cnt, int alpha, int beta, const bool feedback)
@@ -330,7 +327,6 @@ int alphabeta(int depth, const int player, const int player_cnt, int alpha, int 
 				int val = alphabeta(depth - 1, COLOR_OPPS, 2, alpha, beta, false);
 
 				board[x][y] = 0;
-
 				ret = max(ret, offset + val);
 
 				if (feedback && alpha < ret)
@@ -463,6 +459,32 @@ int alphabeta(int depth, const int player, const int player_cnt, int alpha, int 
 	}
 }
 
+bool compDist(point p1, point p2) {
+	return distFromMid[p1.x][p1.y] < distFromMid[p2.x][p2.y];
+}
+
+void updateOrder() {
+	double mid_y = 0, mid_x = 0;
+	int stone_number = 0;
+	for (int i = 0; i < BOARD_SIZE; i++) {
+		for (int j = 0; j < BOARD_SIZE; j++) {
+			if (board[i][j] != 0) {
+				stone_number++;
+				mid_x += i;
+				mid_y += j;
+			}
+		}
+	}
+	mid_y /= stone_number;
+	mid_x /= stone_number;
+
+	for (int i = 0; i < BOARD_SIZE; i++)
+		for (int j = 0; j < BOARD_SIZE; j++)
+			distFromMid[i][j] = abs(mid_x - i) + abs(mid_y - j);
+
+	sort(order.begin(), order.end(), compDist);
+}
+
 void myturn(int cnt) {
 	static bool isFirst = true;
 	if (isFirst)
@@ -473,13 +495,13 @@ void myturn(int cnt) {
 				order.push_back({ i, j });
 	}
 
-	// shuffle the order
 	// maybe bfs among the previous stones might be better
-	std::random_shuffle(order.begin(), order.end());
 
 	update_board();
 
-	alphabeta(cnt + 2, COLOR_OURS, cnt, -INF, INF, true);
+	updateOrder();
+
+	alphabeta(cnt + MAX_DEPTH, COLOR_OURS, cnt, -INF, INF, true);
 
 	int x[2] = { p1.x, p2.x };
 	int y[2] = { p1.y, p2.y };
