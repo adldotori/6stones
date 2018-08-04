@@ -37,7 +37,7 @@ int showBoard(int x, int y) : [x, y] 좌표에 무슨 돌이 존재하는지 보여주는 함수 (
 // "샘플코드[C]"  -> 자신의 팀명 (수정)
 // "AI부서[C]"  -> 자신의 소속 (수정)
 // 제출시 실행파일은 반드시 팀명으로 제출!
-char info[] = { "TeamName:asdfasdff ,Department:AI부서" };
+char info[] = { "TeamName:5목할래요 ,Department:abc" };
 
 //timestamp 201708160009
 #include <stdio.h>
@@ -121,7 +121,6 @@ bool is_valid(int x, int y)
 {
 	return 0 <= x && x < BOARD_SIZE && 0 <= y && y < BOARD_SIZE;
 }
-
 // initializing the score and each cells' count
 // is this method really necessary?
 // currently this method is not used
@@ -158,7 +157,6 @@ void init_score()
 		}
 	}
 }
-
 // consider whether seven-mok is inevitable if we place the stone on line[6]
 bool isSevenMok(int line[2 * LENGTH + 1], int cur_color)
 {
@@ -186,7 +184,6 @@ bool isSevenMok(int line[2 * LENGTH + 1], int cur_color)
 
 		if (line[pos + 1] == cur_color || line[pos + 1] == 0) our_count--;
 	}
-
 	return seven_count;
 }
 // compute the score of the given point
@@ -195,7 +192,7 @@ int compute_score(point p)
 {
 	int diff = 0; // (our score) - (opp score)
 
-	int* my_score = myscore;
+	int* my_score = myscore;	
 	int* op_score = opscore;
 	if (p.c == COLOR_OPPS)
 		std::swap(my_score, op_score);
@@ -307,7 +304,8 @@ void update_board()
 	}
 }
 
-std::vector<point> order;
+//test
+std::vector<point> order;	
 // alpha-beta by the difference and a bit of greedy
 int alphabeta(int depth, const int player, const int player_cnt, int alpha, int beta, const bool feedback)
 {
@@ -332,6 +330,7 @@ int alphabeta(int depth, const int player, const int player_cnt, int alpha, int 
 				int val = alphabeta(depth - 1, COLOR_OPPS, 2, alpha, beta, false);
 
 				board[x][y] = 0;
+
 				ret = max(ret, offset + val);
 
 				if (feedback && alpha < ret)
@@ -401,7 +400,6 @@ int alphabeta(int depth, const int player, const int player_cnt, int alpha, int 
 				int x2 = order[dat.z2].x;
 				int y2 = order[dat.z2].y;
 				board[x2][y2] = player;
-
 				int val = alphabeta(depth - 2, COLOR_OPPS, 2, alpha, beta, false);
 				//printf("%d %d %d %d %d %d\n",x1,y1,x2,y2,dat.score,val);
 
