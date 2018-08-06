@@ -64,7 +64,7 @@ const int COLOR_OURS = 1;
 const int COLOR_OPPS = 2;
 const int COLOR_BLOCK = 3;
 
-const int MAX_DEPTH = 4;
+const int MAX_DEPTH = 2;
 
 // x,y : the coordinates
 // i : 0 if the stone is ours, 1 if the stone is opponent's, 2 if blocking
@@ -167,28 +167,23 @@ bool isSevenMok(int line[2 * LENGTH + 1], int cur_color)
 	int our_count = 0;
 	bool seven_count = false;
 	// assume empty cells are our colors
-	for (int pos = -LENGTH + 1; pos < 0; pos++)
+	for (int pos = -LENGTH; pos <= 0; pos++)
 	{
-		if (line[pos + LENGTH] == cur_color || line[pos + LENGTH] == 0) our_count++;
+		if (line[pos + LENGTH] == cur_color || line[pos + LENGTH] == COLOR_BLOCK) our_count++;
 	}
 
-	for (int pos = 0; pos < LENGTH; pos++)
+	for (int pos = 0; pos <= LENGTH; pos++)
 	{
-		if (line[pos + LENGTH] == cur_color || line[pos + LENGTH] == 0) our_count++;
+		if (line[pos + LENGTH+1] == cur_color || line[pos + LENGTH+1] == COLOR_BLOCK) our_count++;
+		if (line[pos] == cur_color || line[pos] == COLOR_BLOCK) our_count--;
 
-		if (our_count == 6)
+		if (our_count == LENGTH+1)
 		{
-			// it's a mere six-mok
-			if (line[pos] != cur_color && line[pos + LENGTH + 1] != cur_color)
-				return false;
-
-			// else it's seven or more
-			seven_count = true;
+			return true;
 		}
 
-		if (line[pos + 1] == cur_color || line[pos + 1] == 0) our_count--;
 	}
-	return seven_count;
+	return false;
 }
 // compute the score of the given point
 // the most tricky part : calibration required
