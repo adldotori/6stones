@@ -73,8 +73,12 @@
     <ClInclude Include="Connect6Algo.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="AI_Algorithm_Code.cpp" />
-    <ClCompile Include="Connect6Algo.cpp" />
+    <ClCompile Include="AI_Algorithm_Code.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">false</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="Connect6Algo.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">false</ExcludedFromBuild>
+    </ClCompile>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
