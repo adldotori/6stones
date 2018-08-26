@@ -1,1 +1,7 @@
-﻿  SamsungGo_AI_Code_배포.vcxproj -> C:\Users\Taeho\source\repos\6stones\Release\SamsungGo_AI_Code_배포.exe
+﻿  AI_Algorithm_Code.cpp
+c:\users\taeho\source\repos\6stones\samsunggo_ai_code_배포\ai_algorithm_code.cpp(646): warning C4018: '<': signed 또는 unsigned가 일치하지 않습니다.
+c:\users\taeho\source\repos\6stones\samsunggo_ai_code_배포\ai_algorithm_code.cpp(713): warning C4018: '<': signed 또는 unsigned가 일치하지 않습니다.
+c:\users\taeho\source\repos\6stones\samsunggo_ai_code_배포\ai_algorithm_code.cpp(897): warning C4018: '<': signed 또는 unsigned가 일치하지 않습니다.
+c:\users\taeho\source\repos\6stones\samsunggo_ai_code_배포\ai_algorithm_code.cpp(957): warning C4018: '<': signed 또는 unsigned가 일치하지 않습니다.
+c:\users\taeho\source\repos\6stones\samsunggo_ai_code_배포\ai_algorithm_code.cpp(1033): warning C4244: '인수': 'time_t'에서 'unsigned int'(으)로 변환하면서 데이터가 손실될 수 있습니다.
+  SamsungGo_AI_Code_배포.vcxproj -> C:\Users\Taeho\source\repos\6stones\Release\SamsungGo_AI_Code_배포.exe

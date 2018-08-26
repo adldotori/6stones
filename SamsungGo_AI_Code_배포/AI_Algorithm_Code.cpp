@@ -49,6 +49,7 @@ char info[] = { "TeamName:5목할래요 ,Department:한가협" };
 #include <algorithm>
 #include <stdlib.h>
 #include <queue>
+#include <chrono>
 
 // uncomment the below macro to debug via console or user input
 //#define SECRET_AGENCY_DEBUG_MODE
@@ -69,6 +70,10 @@ const int MAX_DEPTH = 6;
 int cand_size = 5;
 
 extern int limitTime;
+std::chrono::system_clock::time_point start_time;
+int time_threshold = 200;
+bool isTimeExceeded = false;
+int time_cnt = 0;
 
 // x,y : the coordinates
 // i : 0 if the stone is ours, 1 if the stone is opponent's, 2 if blocking
@@ -83,8 +88,8 @@ struct data {
 // status of the boardA
 int board[BOARD_SIZE][BOARD_SIZE];
 // weight of adding our connected components
-int myscore[LENGTH + 1] = { 0,1,6,10,100,0,0 };
-int opscore[LENGTH + 1] = { 0,0,4,6,0,0,0 };
+int myscore[LENGTH + 1] = { 0,1,6,10,100,0,10000 };
+int opscore[LENGTH + 1] = { 0,0,4,6,100,0,0 };
 
 
 // directions of mok
@@ -105,7 +110,7 @@ double distFromMid[BOARD_SIZE][BOARD_SIZE];
 //save prev points
 std::vector<std::pair<point, point>> prev;
 
-point p1, p2;
+point p1, p2, res1, res2;
 
 #ifdef SECRET_AGENCY_DEBUG_MODE
 // define these debug methods
@@ -309,11 +314,10 @@ int compute_score(point p)
 	}
 	return diff;
 }
-
 std::pair<point, int> isOurFourExist(int player) { //start_point & dir ; if there aren't four stones, dir = -1
 	bool check = false;
 	int ret_dir = -1;
-	point stones = { -1,-1,-1 };
+	point stones;
 	for (int dir = 0; dir < 4; dir++) {
 		for (int x = 0; x < BOARD_SIZE; x++) {
 			for (int y = 0; y < BOARD_SIZE; y++) {
@@ -342,7 +346,6 @@ std::pair<point, int> isOurFourExist(int player) { //start_point & dir ; if ther
 	if (check) return std::make_pair(stones, ret_dir);
 	return std::make_pair(stones, -1);
 }
-
 std::pair<int, std::pair<point, int>> isOppFourExist(point p) { //mystone +, opstone -
 	int x = p.x, y = p.y;
 	int count, pos = 0;
@@ -456,6 +459,13 @@ std::vector<point> order;
 // alpha-beta by the difference and a bit of greedy
 int alphabeta(int depth, const int player, const int player_cnt, int score, int alpha, int beta, const bool feedback)
 {
+	//if left time is less then time_threshold, set isValid as 0 and return
+	if (time_cnt++ > 100 && (std::chrono::system_clock::now() - start_time) > std::chrono::milliseconds(1000 * limitTime - time_threshold)) {
+		isTimeExceeded = true;
+		time_cnt = 0;
+		return 0;
+	}
+
 	if (depth == 0)
 	{
 		return 0;
@@ -521,7 +531,7 @@ int alphabeta(int depth, const int player, const int player_cnt, int score, int 
 
 			if (feedback)
 			{
-				p1 = { p[0].x,p[0].y };
+				p1 = { p[0].x, p[0].y };
 				p2 = { p[1].x, p[1].y };
 			}
 			return 10000;
@@ -530,12 +540,7 @@ int alphabeta(int depth, const int player, const int player_cnt, int score, int 
 		OppFour[0] = isOppFourExist(prev.front().first);
 		OppFour[1] = isOppFourExist(prev.front().second);
 		for (int i = 0; i < 2; i++) {
-			if (OppFour[i].first == 4) { // opp has 5 stones
-				point p = OppFour[i].second.first;
-				int dir = OppFour[i].second.second;
-
-			}
-			if (OppFour[i].first == 3) { //opp has 4 stones
+			if (OppFour[i].first == 3) { //opp can make 6 stones
 				point p = OppFour[i].second.first;
 				int dir = OppFour[i].second.second;
 				point Must1[2];
@@ -577,7 +582,7 @@ int alphabeta(int depth, const int player, const int player_cnt, int score, int 
 					board[x1][y1] = 0;
 				}
 
-				for (int z = 0; z < cnt1*cnt2; z++)
+				for (int z = 0; z < 4; z++)
 				{
 					data dat = pq.top();
 					pq.pop();
@@ -590,10 +595,15 @@ int alphabeta(int depth, const int player, const int player_cnt, int score, int 
 					board[x2][y2] = player;
 					//printf("depth:%d,(%d,%d) (%d,%d) %d (%d,%d)\n", MAX_DEPTH + 2 - depth, x1, y1, x2, y2, dat.score, alpha, beta);
 
+					prev.push_back(std::pair<point, point>({ x1, y1, COLOR_OURS }, { x2, y2, COLOR_OURS }));
+					int val = alphabeta(depth - 2, COLOR_OPPS, 2, dat.score, alpha, beta, false);
+					if (isTimeExceeded) return 0;
+					prev.pop_back();
+
 					board[x1][y1] = 0;
 					board[x2][y2] = 0;
-					ret = max(ret, dat.score);
-					//printf("ret = %d\n", ret);
+					ret = max(ret, dat.score + val);
+					//printf("ret = %d\n", dat.score + val);
 
 					if (feedback && alpha < ret)
 					{
@@ -659,6 +669,7 @@ int alphabeta(int depth, const int player, const int player_cnt, int score, int 
 
 					prev.push_back(std::pair<point, point>({ x1, y1, COLOR_OURS }, { x2, y2, COLOR_OURS }));
 					int val = alphabeta(depth - 2, COLOR_OPPS, 2, dat.score, alpha, beta, false);
+					if (isTimeExceeded) return 0;
 					prev.pop_back();
 
 					board[x1][y1] = 0;
@@ -729,6 +740,7 @@ int alphabeta(int depth, const int player, const int player_cnt, int score, int 
 			printf("(%d,%d) / (%d,%d)\n", prev[i].first.x, prev[i].first.y, prev[i].second.x, prev[i].second.y);
 			}*/
 			int val = alphabeta(depth - 2, COLOR_OPPS, 2, dat.score, alpha, beta, false);
+			if (isTimeExceeded) return 0;
 			prev.pop_back();
 
 			board[x1][y1] = 0;
@@ -828,7 +840,7 @@ int alphabeta(int depth, const int player, const int player_cnt, int score, int 
 					board[x1][y1] = 0;
 				}
 
-				for (int z = 0; z < cnt1*cnt2; z++)
+				for (int z = 0; z < 4; z++)
 				{
 					data dat = pq.top();
 					pq.pop();
@@ -840,11 +852,15 @@ int alphabeta(int depth, const int player, const int player_cnt, int score, int 
 					int y2 = Must2[dat.z2].y;
 					board[x2][y2] = player;
 					//printf("depth:%d,(%d,%d) (%d,%d) %d (%d,%d)\n", MAX_DEPTH + 2 - depth, x1, y1, x2, y2, -dat.score, alpha, beta);
+					prev.push_back(std::pair<point, point>({ x1, y1, COLOR_OPPS }, { x2, y2, COLOR_OPPS }));
+					int val = alphabeta(depth - 2, COLOR_OURS, 2, -dat.score, alpha, beta, false);
+					if (isTimeExceeded) return 0;
+					prev.pop_back();
 
 					board[x1][y1] = 0;
 					board[x2][y2] = 0;
-					ret = min(ret, -dat.score);
-					//printf("ret = %d\n", -dat.score);
+					ret = min(ret, -dat.score + val);
+					//printf("ret = %d\n", -dat.score + val);
 					beta = min(beta, ret);
 					if (beta + score <= alpha)
 					{
@@ -904,6 +920,7 @@ int alphabeta(int depth, const int player, const int player_cnt, int score, int 
 
 					prev.push_back(std::pair<point, point>({ x1, y1, COLOR_OPPS }, { x2, y2, COLOR_OPPS }));
 					int val = alphabeta(depth - 2, COLOR_OURS, 2, -dat.score, alpha, beta, false);
+					if (isTimeExceeded) return 0;
 					prev.pop_back();
 
 					board[x1][y1] = 0;
@@ -964,6 +981,7 @@ int alphabeta(int depth, const int player, const int player_cnt, int score, int 
 
 			prev.push_back(std::pair<point, point>({ x1, y1, COLOR_OPPS }, { x2, y2, COLOR_OPPS }));
 			int val = alphabeta(depth - 2, COLOR_OURS, 2, -dat.score, alpha, beta, false);
+			if (isTimeExceeded) return 0;
 			prev.pop_back();
 
 			board[x1][y1] = 0;
@@ -1006,6 +1024,9 @@ void updateOrder() {
 }
 
 void myturn(int cnt) {
+	start_time = std::chrono::system_clock::now();
+	isTimeExceeded = false;
+
 	static bool isFirst = true;
 	if (isFirst)
 	{
@@ -1021,6 +1042,7 @@ void myturn(int cnt) {
 
 	updateOrder();
 
+	/*
 	switch (limitTime) {
 	case 2: cand_size = 4; break;
 	case 3: cand_size = 5; break;
@@ -1030,10 +1052,17 @@ void myturn(int cnt) {
 	case 7: cand_size = 7; break;
 	default: cand_size = 7;
 	}
-	alphabeta(cnt + MAX_DEPTH, COLOR_OURS, cnt, 0, -INF, INF, true);
+	*/
 
-	int x[2] = { p1.x, p2.x };
-	int y[2] = { p1.y, p2.y };
+	for (int depth = 0; depth <= 10; depth += 2) {
+		alphabeta(cnt + depth, COLOR_OURS, cnt, 0, -INF, INF, true);
+		if (isTimeExceeded) break;
+		res1 = p1;
+		res2 = p2;
+	}
+
+	int x[2] = { res1.x, res2.x };
+	int y[2] = { res1.y, res2.y };
 
 	domymove(x, y, cnt);
 
