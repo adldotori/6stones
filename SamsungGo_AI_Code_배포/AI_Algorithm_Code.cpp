@@ -347,7 +347,7 @@ std::pair<point, int> isOurFourExist(int player) { //start_point & dir ; if ther
 }
 std::pair<int, std::pair<point, int>> isOppFourExist(point p) { //mystone +, opstone -
 	int x = p.x, y = p.y;
-	int count, pos = 0;
+	int count=-1, pos = 0;
 	int ret_dir = -1;
 	bool check = false;
 	point stones = { -1,-1,-1 };
