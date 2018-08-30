@@ -37,7 +37,7 @@ int showBoard(int x, int y) : [x, y] 좌표에 무슨 돌이 존재하는지 보여주는 함수 (
 // "샘플코드[C]"  -> 자신의 팀명 (수정)
 // "AI부서[C]"  -> 자신의 소속 (수정)
 // 제출시 실행파일은 반드시 팀명으로 제출!
-char info[] = { "TeamName:5목할래요 ,Department:한가협" };
+char info[] = { "TeamName:1 ,Department:한가협" };
 
 //timestamp 201708160009
 #include <stdio.h>
@@ -67,7 +67,7 @@ const int COLOR_OPPS = 2;
 const int COLOR_BLOCK = 3;
 
 const int MAX_DEPTH = 6;
-int cand_size = 5;
+int cand_size = 8;
 
 extern int limitTime;
 std::chrono::system_clock::time_point start_time;
@@ -87,6 +87,7 @@ struct data {
 
 // status of the boardA
 int board[BOARD_SIZE][BOARD_SIZE];
+int realboard[BOARD_SIZE][BOARD_SIZE];
 // weight of adding our connected components
 int myscore[LENGTH + 1] = { 0,1,6,10,100,0,10000 };
 int opscore[LENGTH + 1] = { 0,0,4,6,100,0,0 };
@@ -109,6 +110,7 @@ double distFromMid[BOARD_SIZE][BOARD_SIZE];
 
 //save prev points
 std::vector<std::pair<point, point>> prev;
+std::vector<std::pair<point, point>> realprev;
 
 point p1, p2, res1, res2;
 
@@ -426,29 +428,45 @@ std::pair<int, std::pair<point, int>> isOppFourExist(point p) { //mystone +, ops
 void update_board()
 {
 	int cnt = 0;
-	prev.clear();
-	prev.resize(1);
+	realprev.clear();
+	realprev.resize(1);
 	for (int i = 0; i < BOARD_SIZE; i++)
 	{
 		for (int j = 0; j < BOARD_SIZE; j++)
 		{
 			int newData = showBoard(i, j);
-			if (board[i][j] != showBoard(i, j) && showBoard(i, j) == COLOR_OPPS) {
+			if (realboard[i][j] != showBoard(i, j) && showBoard(i, j) == COLOR_OPPS) {
 				if (cnt == 0) {
-					prev[0].first.x = i;
-					prev[0].first.y = j;
-					prev[0].first.c = COLOR_OPPS;
+					realprev[0].first.x = i;
+					realprev[0].first.y = j;
+					realprev[0].first.c = COLOR_OPPS;
 					cnt++;
 				}
 				else {
-					prev[0].second.x = i;
-					prev[0].second.y = j;
-					prev[0].second.c = COLOR_OPPS;
+					realprev[0].second.x = i;
+					realprev[0].second.y = j;
+					realprev[0].second.c = COLOR_OPPS;
 				}
 			}
-			board[i][j] = showBoard(i, j);
+			realboard[i][j] = showBoard(i, j);
 		}
 	}
+}
+
+void copy_board() {
+	for (int i = 0; i < BOARD_SIZE; i++) {
+		for (int j = 0; j < BOARD_SIZE; j++) {
+			board[i][j] = realboard[i][j];
+		}
+	}
+	prev.clear();
+	prev.resize(1);
+	prev[0].first.x = realprev[0].first.x;
+	prev[0].first.y = realprev[0].first.y;
+	prev[0].first.c = realprev[0].first.c;
+	prev[0].second.x = realprev[0].second.x;
+	prev[0].second.y = realprev[0].second.y;
+	prev[0].second.c = realprev[0].second.c;
 }
 
 //test
@@ -1056,7 +1074,8 @@ void myturn(int cnt) {
 	}
 	*/
 
-	for (int depth = 0; depth <= 10; depth += 2) {
+	for (int depth = 0; depth <= 20; depth += 2) {
+		copy_board();
 		alphabeta(cnt + depth, COLOR_OURS, cnt, 0, -INF, INF, true);
 		if (isTimeExceeded) break;
 		res1 = p1;
