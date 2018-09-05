@@ -89,8 +89,8 @@ struct data {
 int board[BOARD_SIZE][BOARD_SIZE];
 int realboard[BOARD_SIZE][BOARD_SIZE];
 // weight of adding our connected components
-int myscore[LENGTH + 1] = { 0,1,6,10,100,0,10000 };
-int opscore[LENGTH + 1] = { 0,0,4,6,100,0,0 };
+int myscore[LENGTH + 1] = { 0,1,6,10,100,0,0 };
+int opscore[LENGTH + 1] = { 0,0,4,6,0,0,0 };
 
 
 // directions of mok
@@ -388,7 +388,7 @@ std::pair<int, std::pair<point, int>> isOppFourExist(point p) { //mystone +, ops
 
 			if (k >= 0)
 			{
-				if (opp_count + blk_count >= 4 && out_count == 0 && our_count == 0 && line[k] != p.c && line[LENGTH + k + 1] != p.c) {
+				if (opp_count + blk_count >= 4 && out_count == 0 && our_count == 0) {
 					cnt++;
 					pos = k;
 				}
@@ -523,7 +523,7 @@ int alphabeta(int depth, const int player, const int player_cnt, int score, int 
 		// investigate O(N^2) cases is too costly
 		// currently the program investigates some of them 
 		// the amount of the candidate can be calibrated
-		//printf("depth:%d,player:%d,score:%d,alpha,beta:%d,%d\n", MAX_DEPTH + 2 - depth, player, score, alpha, beta);	
+		//printf("depth:%d,player:%d,score:%d,alpha,beta:%d,%d\n", depth, player, score, alpha, beta);	
 
 		int ret = -INF;
 
@@ -551,7 +551,7 @@ int alphabeta(int depth, const int player, const int player_cnt, int score, int 
 				}
 			}
 			ret = 10000;
-			//printf("depth:%d,(%d,%d) (%d,%d) %d (%d,%d)\n", MAX_DEPTH + 2 - depth, p[0].x, p[0].y, p[1].x, p[1].y, 10000, alpha, beta);
+			//printf("depth:%d,(%d,%d) (%d,%d) %d (%d,%d)\n", depth, p[0].x, p[0].y, p[1].x, p[1].y, 10000, alpha, beta);
 
 			if (feedback)
 			{
@@ -617,7 +617,7 @@ int alphabeta(int depth, const int player, const int player_cnt, int score, int 
 					int x2 = Must2[dat.z2].x;
 					int y2 = Must2[dat.z2].y;
 					board[x2][y2] = player;
-					//printf("depth:%d,(%d,%d) (%d,%d) %d (%d,%d)\n", MAX_DEPTH + 2 - depth, x1, y1, x2, y2, dat.score, alpha, beta);
+					//printf("depth:%d,(%d,%d) (%d,%d) %d (%d,%d)\n", depth, x1, y1, x2, y2, dat.score, alpha, beta);
 					if (isTimeExceeded) return 0;
 					board[x1][y1] = 0;
 					board[x2][y2] = 0;
@@ -680,7 +680,7 @@ int alphabeta(int depth, const int player, const int player_cnt, int score, int 
 					int x2 = order[dat.z2].x;
 					int y2 = order[dat.z2].y;
 					board[x2][y2] = player;
-					//printf("depth:%d,(%d,%d) (%d,%d) %d (%d,%d)\n", MAX_DEPTH + 2 - depth, p.x, p.y, x2, y2, dat.score, alpha, beta);
+					//printf("depth:%d,(%d,%d) (%d,%d) %d (%d,%d)\n", depth, p.x, p.y, x2, y2, dat.score, alpha, beta);
 
 					prev.push_back(std::pair<point, point>({ x1, y1, COLOR_OURS }, { x2, y2, COLOR_OURS }));
 					int val = alphabeta(depth - 2, COLOR_OPPS, 2, dat.score, alpha, beta, false);
@@ -748,21 +748,21 @@ int alphabeta(int depth, const int player, const int player_cnt, int score, int 
 			int x2 = order[dat.z2].x;
 			int y2 = order[dat.z2].y;
 			board[x2][y2] = player;
-			//printf("depth:%d,(%d,%d) (%d,%d) %d (%d,%d)\n", MAX_DEPTH + 2 - depth, order[dat.z1].x, order[dat.z1].y, order[dat.z2].x, order[dat.z2].y, dat.score, alpha, beta);
+			//printf("depth:%d,(%d,%d) (%d,%d) %d (%d,%d)\n", depth, order[dat.z1].x, order[dat.z1].y, order[dat.z2].x, order[dat.z2].y, dat.score, alpha, beta);
 
 			prev.push_back(std::pair<point, point>({ x1, y1, COLOR_OURS }, { x2, y2, COLOR_OURS }));
 			/*for (int i = 0; i < prev.size(); i++) {
 			printf("(%d,%d) / (%d,%d)\n", prev[i].first.x, prev[i].first.y, prev[i].second.x, prev[i].second.y);
 			}*/
 			int val = alphabeta(depth - 2, COLOR_OPPS, 2, dat.score, alpha, beta, false);
-			if (isTimeExceeded) return 0;
+			if (isTimeExceeded) return 0;	
 			prev.pop_back();
 
 			board[x1][y1] = 0;
 			board[x2][y2] = 0;
 			ret = max(ret, dat.score + val);
 
-			//printf("ret = %d\n", dat.score + val);
+			//printf("ret = %d\n", ret);
 			if (feedback && alpha < ret)
 			{
 				p1 = { x1, y1 };
@@ -782,7 +782,7 @@ int alphabeta(int depth, const int player, const int player_cnt, int score, int 
 		// investigate O(N^2) cases is too costly
 		// currently the program investigates some of them 
 		// the amount of the candidate can be calibrated
-		//printf("depth:%d,player:%d,score:%d,alpha,beta:%d,%d\n", MAX_DEPTH + 2 - depth, player, score, alpha, beta);
+		//printf("depth:%d,player:%d,score:%d,alpha,beta:%d,%d\n",depth, player, score, alpha, beta);
 
 		int ret = INF;
 
@@ -810,7 +810,7 @@ int alphabeta(int depth, const int player, const int player_cnt, int score, int 
 				}
 			}
 			ret = -10000;
-			//printf("depth:%d,(%d,%d) (%d,%d) %d (%d,%d)\n", MAX_DEPTH + 2 - depth, p[0].x, p[0].y, p[1].x, p[1].y, 10000, alpha, beta);
+			//printf("depth:%d,(%d,%d) (%d,%d) %d (%d,%d)\n",depth, p[0].x, p[0].y, p[1].x, p[1].y, 10000, alpha, beta);
 
 			if (feedback)
 			{
@@ -877,7 +877,7 @@ int alphabeta(int depth, const int player, const int player_cnt, int score, int 
 					int x2 = Must2[dat.z2].x;
 					int y2 = Must2[dat.z2].y;
 					board[x2][y2] = player;
-					//printf("depth:%d,(%d,%d) (%d,%d) %d (%d,%d)\n", MAX_DEPTH + 2 - depth, x1, y1, x2, y2, -dat.score, alpha, beta);
+					//printf("depth:%d,(%d,%d) (%d,%d) %d (%d,%d)\n",depth, x1, y1, x2, y2, -dat.score, alpha, beta);
 					if (isTimeExceeded) return 0;
 
 					board[x1][y1] = 0;
@@ -936,7 +936,7 @@ int alphabeta(int depth, const int player, const int player_cnt, int score, int 
 					int x2 = order[dat.z2].x;
 					int y2 = order[dat.z2].y;
 					board[x2][y2] = player;
-					//printf("depth:%d,(%d,%d) (%d,%d) %d (%d,%d)\n", MAX_DEPTH + 2 - depth, x1, y1, x2, y2, dat.score, alpha, beta);
+					//printf("depth:%d,(%d,%d) (%d,%d) %d (%d,%d)\n",depth, x1, y1, x2, y2, dat.score, alpha, beta);
 
 					prev.push_back(std::pair<point, point>({ x1, y1, COLOR_OPPS }, { x2, y2, COLOR_OPPS }));
 					int val = alphabeta(depth - 2, COLOR_OURS, 2, -dat.score, alpha, beta, false);
@@ -946,7 +946,7 @@ int alphabeta(int depth, const int player, const int player_cnt, int score, int 
 					board[x1][y1] = 0;
 					board[x2][y2] = 0;
 					ret = min(ret, -dat.score + val);
-					//printf("ret = %d\n", -dat.score + val);
+					//printf("ret = %d\n",ret);
 					beta = min(beta, ret);
 					if (beta + score <= alpha)
 					{
@@ -997,7 +997,7 @@ int alphabeta(int depth, const int player, const int player_cnt, int score, int 
 			int x2 = order[dat.z2].x;
 			int y2 = order[dat.z2].y;
 			board[x2][y2] = player;
-			//printf("depth:%d,(%d,%d) (%d,%d) %d (%d,%d)\n", MAX_DEPTH + 2 - depth, order[dat.z1].x, order[dat.z1].y, order[dat.z2].x, order[dat.z2].y, dat.score, alpha, beta);
+			//printf("depth:%d,(%d,%d) (%d,%d) %d (%d,%d)\n",depth, order[dat.z1].x, order[dat.z1].y, order[dat.z2].x, order[dat.z2].y, dat.score, alpha, beta);
 
 			prev.push_back(std::pair<point, point>({ x1, y1, COLOR_OPPS }, { x2, y2, COLOR_OPPS }));
 			int val = alphabeta(depth - 2, COLOR_OURS, 2, -dat.score, alpha, beta, false);
@@ -1007,7 +1007,7 @@ int alphabeta(int depth, const int player, const int player_cnt, int score, int 
 			board[x1][y1] = 0;
 			board[x2][y2] = 0;
 			ret = min(ret, -dat.score + val);
-			//printf("ret = %d\n", -dat.score + val);
+			//printf("ret = %d\n",ret);
 			beta = min(beta, ret);
 			if (beta + score <= alpha)
 			{
