@@ -567,8 +567,8 @@ int alphabeta(int depth, const int player, const int player_cnt, int score, int 
 			return ret;
 		}
 		std::pair<int, std::pair<point, int>> OppFour[2];
-		OppFour[0] = isOppFourExist(prev.front().first);
-		OppFour[1] = isOppFourExist(prev.front().second);
+		OppFour[0] = isOppFourExist(prev.back().first);
+		OppFour[1] = isOppFourExist(prev.back().second);
 		for (int i = 0; i < 2; i++) { // prevent with two stones now or lose
 			if (OppFour[i].first >= 3) { //opp can make 6 stones
 				point p = OppFour[i].second.first;
@@ -580,11 +580,11 @@ int alphabeta(int depth, const int player, const int player_cnt, int score, int 
 				int pos[4] = { -2,-1,4,5 };
 				for (int i = 0; i < 4; i++) {
 					if (i < 2) {
-						if (board[p.x + dx[dir] * pos[i]][p.y + dy[dir] * pos[i]] == 0)
+						if (is_valid(p.x + dx[dir] * pos[i],p.y + dy[dir] * pos[i])&&board[p.x + dx[dir] * pos[i]][p.y + dy[dir] * pos[i]] == 0)
 							Must1[cnt1++] = { p.x + dx[dir] * pos[i],p.y + dy[dir] * pos[i],p.c };
 					}
 					else {
-						if (board[p.x + dx[dir] * pos[i]][p.y + dy[dir] * pos[i]] == 0)
+						if (is_valid(p.x + dx[dir] * pos[i], p.y + dy[dir] * pos[i])&&board[p.x + dx[dir] * pos[i]][p.y + dy[dir] * pos[i]] == 0)
 							Must2[cnt2++] = { p.x + dx[dir] * pos[i],p.y + dy[dir] * pos[i],p.c };
 					}
 				}
@@ -647,8 +647,10 @@ int alphabeta(int depth, const int player, const int player_cnt, int score, int 
 			for (int i = 0; i < 2; i++) {
 				point p;
 				for (int j = 0; j < LENGTH; j++) {
-					if (board[OppFour[i].second.first.x + dx[OppFour[i].second.second] * j][OppFour[i].second.first.y + dy[OppFour[i].second.second] * j] == 0) {
-						p = { OppFour[i].second.first.x + dx[OppFour[i].second.second] * j,OppFour[i].second.first.y + dy[OppFour[i].second.second] * j,OppFour[i].second.first.c };
+					int nx = OppFour[i].second.first.x + dx[OppFour[i].second.second] * j;
+					int ny = OppFour[i].second.first.y + dy[OppFour[i].second.second] * j;
+					if (is_valid(nx,ny)&&board[nx][ny] == 0) {
+						p = { nx,ny,OppFour[i].second.first.c };
 						break;
 					}
 				}
@@ -670,8 +672,10 @@ int alphabeta(int depth, const int player, const int player_cnt, int score, int 
 			if (OppFour[i].first == 1 || OppFour[i].first == 2) {
 				point p;
 				for (int j = 0; j < LENGTH; j++) {
-					if (board[OppFour[i].second.first.x + dx[OppFour[i].second.second] * j][OppFour[i].second.first.y + dy[OppFour[i].second.second] * j] == 0) {
-						p = { OppFour[i].second.first.x + dx[OppFour[i].second.second] * j,OppFour[i].second.first.y + dy[OppFour[i].second.second] * j,OppFour[i].second.first.c };
+					int nx = OppFour[i].second.first.x + dx[OppFour[i].second.second] * j;
+					int ny = OppFour[i].second.first.y + dy[OppFour[i].second.second] * j;
+					if (is_valid(nx,ny)&&board[nx][ny] == 0) {
+						p = {nx,ny,OppFour[i].second.first.c };
 						break;
 					}
 				}
@@ -873,6 +877,7 @@ void myturn(int cnt) {
 		res1 = p1;
 		res2 = p2;
 	}
+	copy_board();
 
 	int x[2] = { res1.x, res2.x };
 	int y[2] = { res1.y, res2.y };
