@@ -33,3 +33,11 @@
 *.exe
 *.out
 *.app
+
+
+*.suo
+*.db
+*.pdb
+*.log
+*.tlog
+*.ipch

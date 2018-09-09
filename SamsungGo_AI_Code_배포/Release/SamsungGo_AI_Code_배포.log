@@ -1,7 +1,1 @@
-﻿  AI_Algorithm_Code.cpp
-c:\users\hyeon gyu kim\desktop\새 폴더\samsunggo_ai_code_배포\ai_algorithm_code.cpp(670): warning C4018: '<': signed/unsigned mismatch
-c:\users\hyeon gyu kim\desktop\새 폴더\samsunggo_ai_code_배포\ai_algorithm_code.cpp(737): warning C4018: '<': signed/unsigned mismatch
-c:\users\hyeon gyu kim\desktop\새 폴더\samsunggo_ai_code_배포\ai_algorithm_code.cpp(921): warning C4018: '<': signed/unsigned mismatch
-c:\users\hyeon gyu kim\desktop\새 폴더\samsunggo_ai_code_배포\ai_algorithm_code.cpp(981): warning C4018: '<': signed/unsigned mismatch
-c:\users\hyeon gyu kim\desktop\새 폴더\samsunggo_ai_code_배포\ai_algorithm_code.cpp(1056): warning C4244: 'argument': conversion from 'time_t' to 'unsigned int', possible loss of data
-  SamsungGo_AI_Code_배포.vcxproj -> C:\Users\hyeon gyu kim\Desktop\새 폴더\Release\SamsungGo_AI_Code_배포.exe
+﻿  SamsungGo_AI_Code_배포.vcxproj -> C:\Users\hyeon gyu kim\Desktop\새 폴더\Release\SamsungGo_AI_Code_배포.exe
