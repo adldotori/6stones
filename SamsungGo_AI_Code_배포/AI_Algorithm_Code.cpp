@@ -749,7 +749,7 @@ int alphabeta(int depth, const int player, const int player_cnt, int score, int 
 			if (player == COLOR_OURS)
 				ret = max(ret, offset + weight * val);
 			else
-				ret = min(ret, offset + weight * val);
+				ret = min(ret, -offset + weight * val);
 
 			//printf("ret = %d\n", ret);
 			if (feedback && alpha < ret)
