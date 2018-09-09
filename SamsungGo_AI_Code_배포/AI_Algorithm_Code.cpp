@@ -75,6 +75,8 @@ int time_threshold = 200;
 bool isTimeExceeded = false;
 int time_cnt = 0;
 
+//if mode is 1, change depth
+//if mode is 2, chagne cand_size
 int mode = 1;
 
 // x,y : the coordinates
