@@ -456,6 +456,11 @@ void update_board()
 			realboard[i][j] = showBoard(i, j);
 		}
 	}
+	if (cnt == 1) {
+		realprev[0].second.x = realprev[0].first.x;
+		realprev[0].second.y = realprev[0].first.y;
+		realprev[0].second.c = realprev[0].first.c;
+	}
 }
 
 void copy_board() {
@@ -877,6 +882,17 @@ void myturn(int cnt) {
 		res1 = p1;
 		res2 = p2;
 	}
+	/*
+	for (int i = 6; i <= 10; i += 2) {
+		cand_size = i;
+		copy_board();
+		alphabeta(cnt + 6, COLOR_OURS, cnt, 0, -INF, INF, true);
+		if (isTimeExceeded) break;
+		res1 = p1;
+		res2 = p2;
+	}
+	*/
+
 	copy_board();
 
 	int x[2] = { res1.x, res2.x };
