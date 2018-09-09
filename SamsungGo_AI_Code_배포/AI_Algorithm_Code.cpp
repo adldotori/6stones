@@ -762,11 +762,7 @@ int alphabeta(int depth, const int player, const int player_cnt, int score, int 
 			if (player == COLOR_OURS)
 				ret = max(ret, offset + weight * val);
 			else
-<<<<<<< HEAD
 				ret = min(ret, -offset + weight * val);
-=======
-				ret = min(ret, offset + weight * val);
->>>>>>> origin/imsi
 
 			//printf("ret = %d\n", ret);
 			if (feedback && alpha < ret)
@@ -933,11 +929,6 @@ int alphabeta(int depth, const int player, const int player_cnt, int score, int 
 	}
 }
 
-<<<<<<< HEAD
-=======
-
-
->>>>>>> origin/imsi
 bool compDist(point p1, point p2) {
 	return distFromMid[p1.x][p1.y] < distFromMid[p2.x][p2.y];
 }
