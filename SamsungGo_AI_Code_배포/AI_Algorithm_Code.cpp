@@ -117,6 +117,9 @@ double distFromMid[BOARD_SIZE][BOARD_SIZE];
 std::vector<std::pair<point, point>> prev;
 std::vector<std::pair<point, point>> realprev;
 
+//number of stones placed prev turn
+int prevOppStones = 0, prevOurStones = 0;
+
 point p1, p2, res1, res2;
 
 #ifdef SECRET_AGENCY_DEBUG_MODE
@@ -322,14 +325,23 @@ int compute_score(point p)
 	return diff;
 }
 std::pair<point, int> isOurFourExist(int player) { //start_point & dir ; if there aren't four stones, dir = -1
-	bool check = false;
+
+	point stones = { -1, -1, -1 };
 	int ret_dir = -1;
-	point stones = { -1,-1,-1 };
+	int prev_size = prev.size();
+
+	int cand_x[2] = { prev[prev_size - 2].first.x, prev[prev_size - 2].second.x };
+	int cand_y[2] = { prev[prev_size - 2].first.y, prev[prev_size - 2].second.y };
+
+	int x, y, nx, ny;
 	for (int dir = 0; dir < 4; dir++) {
-		for (int x = 0; x < BOARD_SIZE; x++) {
-			for (int y = 0; y < BOARD_SIZE; y++) {
-				int nx = x + 5 * dx[dir];
-				int ny = y + 5 * dy[dir];
+		for (int i = 0; i < 2; i++) {
+			for (int idx = 0; idx < 5; idx++) {
+				x = cand_x[i] + dx[dir] * idx;
+				y = cand_y[i] + dy[dir] * idx;
+				nx = x + 5 * dx[dir];
+				ny = y + 5 * dy[dir];
+				if (!is_valid(x, y)) continue;
 				if (!is_valid(nx, ny)) continue;
 				int cnt = 0;
 				for (int k = 0; k < 6; k++) {
@@ -341,7 +353,6 @@ std::pair<point, int> isOurFourExist(int player) { //start_point & dir ; if ther
 				if (board[x + (-1) * dx[dir]][y + (-1) * dy[dir]] == player || board[x + 6 * dx[dir]][y + 6 * dy[dir]] == player) // prevent 7 stones
 					cnt = 0;
 				if (cnt >= 4) {
-					check = true;
 					stones.x = x;
 					stones.y = y;
 					stones.c = COLOR_OURS;
@@ -351,10 +362,42 @@ std::pair<point, int> isOurFourExist(int player) { //start_point & dir ; if ther
 		}
 	}
 	return std::make_pair(stones, ret_dir);
+
+	/*
+	bool check = false;
+	int ret_dir = -1;
+	point stones = { -1,-1,-1 };
+	for (int dir = 0; dir < 4; dir++) {
+	for (int x = 0; x < BOARD_SIZE; x++) {
+	for (int y = 0; y < BOARD_SIZE; y++) {
+	int nx = x + 5 * dx[dir];
+	int ny = y + 5 * dy[dir];
+	if (!is_valid(nx, ny)) continue;
+	int cnt = 0;
+	for (int k = 0; k < 6; k++) {
+	int color = board[x + k * dx[dir]][y + k * dy[dir]];
+	if (color == player) cnt++;
+	else if (color == 3 - player) { cnt = 0; break; }
+	else if (color == COLOR_BLOCK) cnt++;
+	}
+	if (board[x + (-1) * dx[dir]][y + (-1) * dy[dir]] == player || board[x + 6 * dx[dir]][y + 6 * dy[dir]] == player) // prevent 7 stones
+	cnt = 0;
+	if (cnt >= 4) {
+	check = true;
+	stones.x = x;
+	stones.y = y;
+	stones.c = COLOR_OURS;
+	ret_dir = dir;
+	}
+	}
+	}
+	}
+	return std::make_pair(stones, ret_dir);
+	*/
 }
 std::pair<int, std::pair<point, int>> isOppFourExist(point p) { //mystone +, opstone -
 	int x = p.x, y = p.y;
-	int count=-1, pos = 0;
+	int count = -1, pos = 0;
 	int ret_dir = -1;
 	bool check = false;
 	point stones = { -1,-1,-1 };
@@ -432,7 +475,7 @@ std::pair<int, std::pair<point, int>> isOppFourExist(point p) { //mystone +, ops
 // update board status
 void update_board()
 {
-	int cnt = 0;
+	prevOppStones = 0, prevOurStones = 0;
 	realprev.clear();
 	realprev.resize(1);
 	for (int i = 0; i < BOARD_SIZE; i++)
@@ -441,26 +484,40 @@ void update_board()
 		{
 			int newData = showBoard(i, j);
 			if (realboard[i][j] != showBoard(i, j) && showBoard(i, j) == COLOR_OPPS) {
-				if (cnt == 0) {
+				if (prevOppStones == 0) {
+					realprev[1].first.x = i;
+					realprev[1].first.y = j;
+					realprev[1].first.c = COLOR_OPPS;
+					prevOppStones++;
+				}
+				else {
+					realprev[1].second.x = i;
+					realprev[1].second.y = j;
+					realprev[1].second.c = COLOR_OPPS;
+					prevOppStones++;
+				}
+			}
+			if (realboard[i][j] != showBoard(i, j) && showBoard(i, j) == COLOR_OURS) {
+				if (prevOurStones == 0) {
 					realprev[0].first.x = i;
 					realprev[0].first.y = j;
-					realprev[0].first.c = COLOR_OPPS;
-					cnt++;
+					realprev[0].first.c = COLOR_OURS;
+					prevOurStones++;
 				}
 				else {
 					realprev[0].second.x = i;
 					realprev[0].second.y = j;
-					realprev[0].second.c = COLOR_OPPS;
-					cnt++;
+					realprev[0].second.c = COLOR_OURS;
+					prevOurStones++;
 				}
 			}
 			realboard[i][j] = showBoard(i, j);
 		}
 	}
-	if (cnt == 1) {
-		realprev[0].second.x = realprev[0].first.x;
-		realprev[0].second.y = realprev[0].first.y;
-		realprev[0].second.c = realprev[0].first.c;
+	if (prevOppStones == 1) {
+		realprev[1].second.x = realprev[1].first.x;
+		realprev[1].second.y = realprev[1].first.y;
+		realprev[1].second.c = realprev[1].first.c;
 	}
 }
 
@@ -472,12 +529,14 @@ void copy_board() {
 	}
 	prev.clear();
 	prev.resize(1);
-	prev[0].first.x = realprev[0].first.x;
-	prev[0].first.y = realprev[0].first.y;
-	prev[0].first.c = realprev[0].first.c;
-	prev[0].second.x = realprev[0].second.x;
-	prev[0].second.y = realprev[0].second.y;
-	prev[0].second.c = realprev[0].second.c;
+	for (int i = 0; i < 2; i++) {
+		prev[i].first.x = realprev[i].first.x;
+		prev[i].first.y = realprev[i].first.y;
+		prev[i].first.c = realprev[i].first.c;
+		prev[i].second.x = realprev[i].second.x;
+		prev[i].second.y = realprev[i].second.y;
+		prev[i].second.c = realprev[i].second.c;
+	}
 }
 //test
 std::vector<point> order;
