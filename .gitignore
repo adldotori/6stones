@@ -41,3 +41,5 @@
 *.log
 *.tlog
 *.ipch
+/.vs
+/Release
