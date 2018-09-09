@@ -68,6 +68,7 @@ const int COLOR_BLOCK = 3;
 
 const int MAX_DEPTH = 6;
 int cand_size = 8;
+int weight = 1.3;
 
 extern int limitTime;
 std::chrono::system_clock::time_point start_time;
@@ -447,10 +448,14 @@ void update_board()
 					cnt++;
 				}
 				else {
+
+
+
+
+
 					realprev[0].second.x = i;
 					realprev[0].second.y = j;
 					realprev[0].second.c = COLOR_OPPS;
-					cnt++;
 				}
 			}
 			realboard[i][j] = showBoard(i, j);
@@ -732,9 +737,9 @@ int alphabeta(int depth, const int player, const int player_cnt, int score, int 
 					board[x1][y1] = 0;
 					board[x2][y2] = 0;
 					if (player == COLOR_OURS)
-						ret = max(ret, dat.score + val);
+						ret = max(ret, dat.score + weight*val);
 					else
-						ret = min(ret, -dat.score + val);
+						ret = min(ret, -dat.score + weight*val);
 					//printf("ret = %d\n", color*dat.score + val);
 
 					if (feedback && alpha < ret)
@@ -806,9 +811,9 @@ int alphabeta(int depth, const int player, const int player_cnt, int score, int 
 			board[x1][y1] = 0;
 			board[x2][y2] = 0;
 			if (player == COLOR_OURS)
-				ret = max(ret, dat.score + val);
+				ret = max(ret, dat.score + weight*val);
 			else
-				ret = min(ret, -dat.score + val);
+				ret = min(ret, -dat.score + weight*val);
 
 			//printf("ret = %d\n", ret);
 			if (feedback && alpha < ret)
