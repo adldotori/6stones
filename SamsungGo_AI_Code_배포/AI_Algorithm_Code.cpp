@@ -863,6 +863,7 @@ void updateOrder() {
 
 void myturn(int cnt) {
 	start_time = std::chrono::system_clock::now();
+	int a;
 	isTimeExceeded = false;
 
 	static bool isFirst = true;

@@ -1,1 +1,7 @@
-﻿  SamsungGo_AI_Code_배포.vcxproj -> C:\Users\hyeon gyu kim\Desktop\새 폴더\Release\SamsungGo_AI_Code_배포.exe
+﻿  AI_Algorithm_Code.cpp
+c:\users\hyeon gyu kim\desktop\새 폴더\samsunggo_ai_code_배포\ai_algorithm_code.cpp(71): warning C4244: 'initializing': conversion from 'double' to 'int', possible loss of data
+c:\users\hyeon gyu kim\desktop\새 폴더\samsunggo_ai_code_배포\ai_algorithm_code.cpp(708): warning C4018: '<': signed/unsigned mismatch
+c:\users\hyeon gyu kim\desktop\새 폴더\samsunggo_ai_code_배포\ai_algorithm_code.cpp(781): warning C4018: '<': signed/unsigned mismatch
+c:\users\hyeon gyu kim\desktop\새 폴더\samsunggo_ai_code_배포\ai_algorithm_code.cpp(872): warning C4244: 'argument': conversion from 'time_t' to 'unsigned int', possible loss of data
+c:\users\hyeon gyu kim\desktop\새 폴더\samsunggo_ai_code_배포\ai_algorithm_code.cpp(866): warning C4101: 'a': unreferenced local variable
+  SamsungGo_AI_Code_배포.vcxproj -> C:\Users\hyeon gyu kim\Desktop\새 폴더\Release\SamsungGo_AI_Code_배포.exe
