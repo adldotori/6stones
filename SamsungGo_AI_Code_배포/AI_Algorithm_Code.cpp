@@ -643,43 +643,63 @@ int alphabeta(int depth, const int player, const int player_cnt, int score, int 
 						ret = max(ret, dat.score + weight * val);
 					else
 						ret = min(ret, -dat.score + weight * val);
-					//printf("ret = %d\n", ret);
 
-					if (feedback)
+					//printf("ret = %d\n", ret);
+					if (feedback && alpha < ret)
 					{
 						p1 = { x1, y1 };
 						p2 = { x2, y2 };
+					}
+
+					if (player == COLOR_OURS) {
+						alpha = max(alpha, ret);
+						if (beta <= alpha + score) break;
+					}
+					else {
+						beta = min(beta, ret);
+						if (beta + score <= alpha) break;
 					}
 				}
 				return ret;
 			}
 		}
-		/*if (OppFour[0].first >= 1 && OppFour[1].first >= 1 && (OppFour[0].second.second != OppFour[1].second.second)) {
-		int x[2], y[2];
-		for (int i = 0; i < 2; i++) {
-		point p;
-		for (int j = 0; j < LENGTH; j++) {
-		int nx = OppFour[i].second.first.x + dx[OppFour[i].second.second] * j;
-		int ny = OppFour[i].second.first.y + dy[OppFour[i].second.second] * j;
-		if (is_valid(nx, ny) && board[nx][ny] == 0) {
-		p = { nx,ny,OppFour[i].second.first.c };
-		break;
-		}
-		}
-		x[i] = p.x;
-		y[i] = p.y;
-		if (board[x[i]][y[i]]) continue;
+		if (OppFour[0].first >= 1 && OppFour[1].first >= 1 && !(OppFour[0].second.first.x == OppFour[1].second.first.x && OppFour[0].second.first.y == OppFour[1].second.first.y)) {
+			int x[2], y[2];
+			for (int i = 0; i < 2; i++) {
+				for (int j = 0; j < LENGTH; j++) {
+					int nx = OppFour[i].second.first.x + dx[OppFour[i].second.second] * j;
+					int ny = OppFour[i].second.first.y + dy[OppFour[i].second.second] * j;
+					if (is_valid(nx, ny) && board[nx][ny] == 0) {
+						x[i] = nx;
+						y[i] = ny;
+						//printf("%d %d \n", x[i], y[i]);
+						break;
+					}
+				}
 
-		board[x[i]][y[i]] = player;
-		int offset1 = compute_score({ x[i], y[i], player });
+				board[x[i]][y[i]] = player;
+			}
+			int offset = compute_score({ x[0], y[0], player }) + compute_score({ x[1],y[1],player });
+			//printf("depth:%d,(%d,%d) (%d,%d) %d (%d,%d)\n", depth, x[0], y[0], x[1], y[1], color*offset, alpha, beta);
+			prev.push_back(std::pair<point, point>({ x[0], y[0], player }, { x[1], y[1], player }));
+			int val = alphabeta(depth - 2, 3 - player, 2, color*offset, alpha, beta, false);
+			if (isTimeExceeded) return 0;
+			prev.pop_back();
+			board[x[0]][y[0]] = 0;
+			board[x[1]][y[1]] = 0;
+			if (player == COLOR_OURS)
+				ret = max(ret, offset + weight * val);
+			else
+				ret = min(ret, offset + weight * val);
+
+			//printf("ret = %d\n", ret);
+			if (feedback && alpha < ret)
+			{
+				p1 = { x[0], y[0] };
+				p2 = { x[1], y[1] };
+			}
+			return ret;
 		}
-		if (feedback && alpha < ret)
-		{
-		p1 = { x[0], y[0] };
-		p2 = { x[1], y[1] };
-		}
-		return 0;
-		}*/
 		for (int i = 0; i<2; i++) { // prevent with one stone now or lose
 			if (OppFour[i].first == 1 || OppFour[i].first == 2) {
 				point p;
@@ -836,7 +856,6 @@ int alphabeta(int depth, const int player, const int player_cnt, int score, int 
 		return ret;
 	}
 }
-
 
 bool compDist(point p1, point p2) {
 	return distFromMid[p1.x][p1.y] < distFromMid[p2.x][p2.y];
