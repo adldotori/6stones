@@ -447,14 +447,10 @@ void update_board()
 					cnt++;
 				}
 				else {
-
-
-
-
-
 					realprev[0].second.x = i;
 					realprev[0].second.y = j;
 					realprev[0].second.c = COLOR_OPPS;
+					cnt++;
 				}
 			}
 			realboard[i][j] = showBoard(i, j);
