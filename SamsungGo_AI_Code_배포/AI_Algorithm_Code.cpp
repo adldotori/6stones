@@ -332,13 +332,22 @@ std::pair<point, int> isOurFourExist(int player) { //start_point & dir ; if ther
 
 	int cand_x[2] = { prev[prev_size - 2].first.x, prev[prev_size - 2].second.x };
 	int cand_y[2] = { prev[prev_size - 2].first.y, prev[prev_size - 2].second.y };
+	if (cand_x[0] == 0 || cand_x[1] == 0 || cand_y[0] == 0 || cand_y[1] == 0) {
+		return std::make_pair(stones, ret_dir);
+	}
+	if (prev_size == 2 && prevOurStones < 2) {
+		return std::make_pair(stones, ret_dir);
+	}
+	if (prev_size == 3 && prevOppStones < 2) {
+		return std::make_pair(stones, ret_dir);
+	}
 
 	int x, y, nx, ny;
 	for (int dir = 0; dir < 4; dir++) {
 		for (int i = 0; i < 2; i++) {
-			for (int idx = 0; idx < 5; idx++) {
-				x = cand_x[i] + dx[dir] * idx;
-				y = cand_y[i] + dy[dir] * idx;
+			for (int idx = 0; idx < 6; idx++) {
+				x = cand_x[i] - dx[dir] * idx;
+				y = cand_y[i] - dy[dir] * idx;
 				nx = x + 5 * dx[dir];
 				ny = y + 5 * dy[dir];
 				if (!is_valid(x, y)) continue;
@@ -350,13 +359,16 @@ std::pair<point, int> isOurFourExist(int player) { //start_point & dir ; if ther
 					else if (color == 3 - player) { cnt = 0; break; }
 					else if (color == COLOR_BLOCK) cnt++;
 				}
-				if (board[x + (-1) * dx[dir]][y + (-1) * dy[dir]] == player || board[x + 6 * dx[dir]][y + 6 * dy[dir]] == player) // prevent 7 stones
+				if (is_valid(x + (-1) * dx[dir], y + (-1) * dy[dir]) && board[x + (-1) * dx[dir]][y + (-1) * dy[dir]] == player)
+					cnt = 0;
+				if (is_valid(x + 6 * dx[dir], y + 6 * dy[dir]) && board[x + 6 * dx[dir]][y + 6 * dy[dir]] == player) // prevent 7 stones
 					cnt = 0;
 				if (cnt >= 4) {
 					stones.x = x;
 					stones.y = y;
 					stones.c = COLOR_OURS;
 					ret_dir = dir;
+					return std::make_pair(stones, ret_dir);
 				}
 			}
 		}
@@ -475,9 +487,10 @@ std::pair<int, std::pair<point, int>> isOppFourExist(point p) { //mystone +, ops
 // update board status
 void update_board()
 {
-	prevOppStones = 0, prevOurStones = 0;
+	prevOppStones = 0; 
+	prevOurStones = 0;
 	realprev.clear();
-	realprev.resize(1);
+	realprev.resize(2);
 	for (int i = 0; i < BOARD_SIZE; i++)
 	{
 		for (int j = 0; j < BOARD_SIZE; j++)
@@ -528,7 +541,7 @@ void copy_board() {
 		}
 	}
 	prev.clear();
-	prev.resize(1);
+	prev.resize(2);
 	for (int i = 0; i < 2; i++) {
 		prev[i].first.x = realprev[i].first.x;
 		prev[i].first.y = realprev[i].first.y;
@@ -749,7 +762,11 @@ int alphabeta(int depth, const int player, const int player_cnt, int score, int 
 			if (player == COLOR_OURS)
 				ret = max(ret, offset + weight * val);
 			else
+<<<<<<< HEAD
 				ret = min(ret, -offset + weight * val);
+=======
+				ret = min(ret, offset + weight * val);
+>>>>>>> origin/imsi
 
 			//printf("ret = %d\n", ret);
 			if (feedback && alpha < ret)
@@ -916,6 +933,11 @@ int alphabeta(int depth, const int player, const int player_cnt, int score, int 
 	}
 }
 
+<<<<<<< HEAD
+=======
+
+
+>>>>>>> origin/imsi
 bool compDist(point p1, point p2) {
 	return distFromMid[p1.x][p1.y] < distFromMid[p2.x][p2.y];
 }
