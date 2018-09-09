@@ -75,6 +75,8 @@ int time_threshold = 200;
 bool isTimeExceeded = false;
 int time_cnt = 0;
 
+int mode = 1;
+
 // x,y : the coordinates
 // i : 0 if the stone is ours, 1 if the stone is opponent's, 2 if blocking
 struct point {
@@ -875,23 +877,25 @@ void myturn(int cnt) {
 
 	updateOrder();
 
-	for (int depth = 0; depth <= 10; depth += 2) {
-		copy_board();
-		alphabeta(cnt + depth, COLOR_OURS, cnt, 0, -INF, INF, true);
-		if (isTimeExceeded) break;
-		res1 = p1;
-		res2 = p2;
+	if (mode == 1) {
+		for (int depth = 0; depth <= 10; depth += 2) {
+			copy_board();
+			alphabeta(cnt + depth, COLOR_OURS, cnt, 0, -INF, INF, true);
+			if (isTimeExceeded) break;
+			res1 = p1;
+			res2 = p2;
+		}
 	}
-	/*
-	for (int i = 6; i <= 10; i += 2) {
-		cand_size = i;
-		copy_board();
-		alphabeta(cnt + 6, COLOR_OURS, cnt, 0, -INF, INF, true);
-		if (isTimeExceeded) break;
-		res1 = p1;
-		res2 = p2;
+	else if (mode == 2) {
+		for (int i = 6; i <= 10; i += 2) {
+			cand_size = i;
+			copy_board();
+			alphabeta(cnt + 6, COLOR_OURS, cnt, 0, -INF, INF, true);
+			if (isTimeExceeded) break;
+			res1 = p1;
+			res2 = p2;
+		}
 	}
-	*/
 
 	copy_board();
 
