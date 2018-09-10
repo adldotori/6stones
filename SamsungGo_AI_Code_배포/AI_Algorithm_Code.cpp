@@ -68,7 +68,7 @@ const int COLOR_BLOCK = 3;
 
 const int MAX_DEPTH = 6;
 int cand_size = 8;
-int weight = 1.3;
+const double weight = 1.3;
 
 extern int limitTime;
 std::chrono::system_clock::time_point start_time;
@@ -90,12 +90,17 @@ struct data {
 	int z1, z2, score;
 };
 
+typedef struct stones {
+	point p;
+	int dir;
+}stones_4;
+
 // status of the boardA
 int board[BOARD_SIZE][BOARD_SIZE];
 int realboard[BOARD_SIZE][BOARD_SIZE];
 // weight of adding our connected components
 int myscore[LENGTH + 1] = { 0,1,6,10,100,0,0 };
-int opscore[LENGTH + 1] = { 0,0,4,6,0,0,0 };
+int opscore[LENGTH + 1] = { 0,0,8,12,0,0,0 };
 
 
 // directions of mok
@@ -117,28 +122,14 @@ double distFromMid[BOARD_SIZE][BOARD_SIZE];
 std::vector<std::pair<point, point>> prev;
 std::vector<std::pair<point, point>> realprev;
 
-//number of stones placed prev turn
+//4stones
+int count;
+std::vector<stones_4> sol[3];//0->opp first stone, 1->opp second stone,2->our stone
+
+							 //number of stones placed prev turn
 int prevOppStones = 0, prevOurStones = 0;
 
 point p1, p2, res1, res2;
-
-#ifdef SECRET_AGENCY_DEBUG_MODE
-// define these debug methods
-void domymove(int x[2], int y[2], int cnt)
-{
-	for (int i = 0; i < cnt; i++)
-	{
-		//printf("%d %d\n", x[i], y[i]);
-	}
-}
-
-int showBoard(int x, int y)
-{
-	return board[x][y];
-}
-#define min(a,b) ((a) < (b) ? (a) : (b))
-#define max(a,b) ((a) > (b) ? (a) : (b))
-#endif
 
 class CompData {
 public:
@@ -324,170 +315,72 @@ int compute_score(point p)
 	}
 	return diff;
 }
-std::pair<point, int> isOurFourExist(int player) { //start_point & dir ; if there aren't four stones, dir = -1
 
-	point stones = { -1, -1, -1 };
-	int ret_dir = -1;
+void isFourExist(int player) { //mode=1-> my four stones, mode=2-> opp four stones
+	sol[0].clear();
+	sol[1].clear();
+	sol[2].clear();
+	count = 0;
+	stones_4 var;
+	var.p = { -1, -1, -1 };
+	var.dir = -1;
 	int prev_size = prev.size();
-
-	int cand_x[2] = { prev[prev_size - 2].first.x, prev[prev_size - 2].second.x };
-	int cand_y[2] = { prev[prev_size - 2].first.y, prev[prev_size - 2].second.y };
-	if (cand_x[0] == 0 || cand_x[1] == 0 || cand_y[0] == 0 || cand_y[1] == 0) {
-		return std::make_pair(stones, ret_dir);
-	}
-	if (prev_size == 2 && prevOurStones < 2) {
-		return std::make_pair(stones, ret_dir);
-	}
-	if (prev_size == 3 && prevOppStones < 2) {
-		return std::make_pair(stones, ret_dir);
-	}
-
-	int x, y, nx, ny;
-	for (int dir = 0; dir < 4; dir++) {
+	for (int mode = 0; mode < 2; mode++) { //cnt==0->my four stones, cnt==1->opp four stones
+		bool flag = false;
+		int cand_x[2] = { prev[prev_size - 2 + mode].first.x, prev[prev_size - 2 + mode].second.x };
+		int cand_y[2] = { prev[prev_size - 2 + mode].first.y, prev[prev_size - 2 + mode].second.y };
+		int x, y, nx, ny;
 		for (int i = 0; i < 2; i++) {
-			for (int idx = 0; idx < 6; idx++) {
-				x = cand_x[i] - dx[dir] * idx;
-				y = cand_y[i] - dy[dir] * idx;
-				nx = x + 5 * dx[dir];
-				ny = y + 5 * dy[dir];
-				if (!is_valid(x, y)) continue;
-				if (!is_valid(nx, ny)) continue;
-				int cnt = 0;
-				for (int k = 0; k < 6; k++) {
-					int color = board[x + k * dx[dir]][y + k * dy[dir]];
-					if (color == player) cnt++;
-					else if (color == 3 - player) { cnt = 0; break; }
-					else if (color == COLOR_BLOCK) cnt++;
-				}
-				if (is_valid(x + (-1) * dx[dir], y + (-1) * dy[dir]) && board[x + (-1) * dx[dir]][y + (-1) * dy[dir]] == player)
-					cnt = 0;
-				if (is_valid(x + 6 * dx[dir], y + 6 * dy[dir]) && board[x + 6 * dx[dir]][y + 6 * dy[dir]] == player) // prevent 7 stones
-					cnt = 0;
-				if (cnt >= 4) {
-					stones.x = x;
-					stones.y = y;
-					stones.c = COLOR_OURS;
-					ret_dir = dir;
-					return std::make_pair(stones, ret_dir);
-				}
-			}
-		}
-	}
-	return std::make_pair(stones, ret_dir);
-
-	/*
-	bool check = false;
-	int ret_dir = -1;
-	point stones = { -1,-1,-1 };
-	for (int dir = 0; dir < 4; dir++) {
-	for (int x = 0; x < BOARD_SIZE; x++) {
-	for (int y = 0; y < BOARD_SIZE; y++) {
-	int nx = x + 5 * dx[dir];
-	int ny = y + 5 * dy[dir];
-	if (!is_valid(nx, ny)) continue;
-	int cnt = 0;
-	for (int k = 0; k < 6; k++) {
-	int color = board[x + k * dx[dir]][y + k * dy[dir]];
-	if (color == player) cnt++;
-	else if (color == 3 - player) { cnt = 0; break; }
-	else if (color == COLOR_BLOCK) cnt++;
-	}
-	if (board[x + (-1) * dx[dir]][y + (-1) * dy[dir]] == player || board[x + 6 * dx[dir]][y + 6 * dy[dir]] == player) // prevent 7 stones
-	cnt = 0;
-	if (cnt >= 4) {
-	check = true;
-	stones.x = x;
-	stones.y = y;
-	stones.c = COLOR_OURS;
-	ret_dir = dir;
-	}
-	}
-	}
-	}
-	return std::make_pair(stones, ret_dir);
-	*/
-}
-std::pair<int, std::pair<point, int>> isOppFourExist(point p) { //mystone +, opstone -
-	int x = p.x, y = p.y;
-	int count = -1, pos = 0;
-	int ret_dir = -1;
-	bool check = false;
-	point stones = { -1,-1,-1 };
-	for (int dir = 0; dir < 4; dir++)
-	{
-		int cnt = 0;
-		int our_count = 0;
-		int opp_count = 0;
-		int blk_count = 0;
-		int out_count = 0;
-		int line[2 * LENGTH + 1] = {}; // the board status of the line segment
-		for (int k = -LENGTH; k <= LENGTH; k++)
-		{
-			int nx = x + dx[dir] * k;
-			int ny = y + dy[dir] * k;
-			int& cur_color = line[LENGTH + k];
-
-			// we assume to be a blocking cell
-			// if the cell is invalid
-			cur_color = 4;
-			if (is_valid(nx, ny))
-				cur_color = board[nx][ny];
-		}
-		for (int k = -LENGTH + 1; k <= LENGTH - 1; k++)
-		{
-			int& cur_color = line[LENGTH + k];
-			if (cur_color == 3 - p.c)
-				our_count++;
-			if (cur_color == p.c)
-				opp_count++;
-			if (cur_color == COLOR_BLOCK)
-				blk_count++;
-			//out of map
-			else if (cur_color == 4)
-				out_count++;
-
-			if (k >= 0)
-			{
-				if (opp_count + blk_count >= 4 && out_count == 0 && our_count == 0) {
-					cnt++;
-					pos = k;
-				}
-				// erase the leftmost stone (similar to deque)
-				int prev_color = line[k + 1];
-				if (prev_color == 3 - p.c)
-				{
-					our_count--;
-				}
-				else if (prev_color == p.c)
-				{
-					opp_count--;
-				}
-				else if (prev_color == COLOR_BLOCK)
-				{
-					blk_count--;
-				}
-				else if (prev_color == 4)
-				{
-					out_count--;
+			if (flag) break;
+			for (int dir = 0; dir < 4; dir++) {
+				if (flag) break;
+				for (int idx = 0; idx < 6; idx++) {
+					if (flag) break;
+					x = cand_x[i] - dx[dir] * idx;
+					y = cand_y[i] - dy[dir] * idx;
+					nx = x + 5 * dx[dir];
+					ny = y + 5 * dy[dir];
+					if (!is_valid(x, y)) continue;
+					if (!is_valid(nx, ny)) continue;
+					int cnt = 0;
+					for (int k = 0; k < 6; k++) {
+						int color = board[x + k * dx[dir]][y + k * dy[dir]];
+						if (color == (player + mode) % 2 + 2) cnt++; //COLOR_OURS
+						else if (color == 1 - (player + mode) % 2) { cnt = 0; break; } //COLOR_OPPS
+						else if (color == COLOR_BLOCK) cnt++;
+					}
+					/*if (is_valid(x + (-1) * dx[dir], y + (-1) * dy[dir]) && board[x + (-1) * dx[dir]][y + (-1) * dy[dir]] == ((player + mode) % 2 + 2))
+						cnt = 0;
+					if (is_valid(x + 6 * dx[dir], y + 6 * dy[dir]) && board[x + 6 * dx[dir]][y + 6 * dy[dir]] == ((player + mode) % 2 + 2)) // prevent 7 stones
+						cnt = 0;*/
+					//printf("%d (%d,%d) (%d,%d) %d\n", i, x, y, nx, ny, cnt);
+					if (cnt >= 4) {
+						var.p = { x,y,(player + mode) % 2 + 2 };
+						var.dir = dir;
+						if (mode == 0) {
+							sol[2].push_back(var);
+							flag = true;
+						}
+						else {
+							if (i == 0) {
+								sol[0].push_back(var);
+							}
+							else {
+								sol[1].push_back(var);
+							}
+						}
+					}
 				}
 			}
 		}
-		if (cnt != 0) {
-			check = true;
-			stones.x = x + dx[dir] * (pos + 1 - LENGTH);
-			stones.y = y + dy[dir] * (pos + 1 - LENGTH);
-			stones.c = line[pos + 1];
-			ret_dir = dir;
-			count = cnt;
-		}
+		if (sol[2].size() == 0) sol[2].push_back(var);
 	}
-	return std::make_pair(count, std::make_pair(stones, ret_dir));
 }
 
 // update board status
 void update_board()
 {
-	prevOppStones = 0; 
+	prevOppStones = 0;
 	prevOurStones = 0;
 	realprev.clear();
 	realprev.resize(2);
@@ -606,33 +499,43 @@ int alphabeta(int depth, const int player, const int player_cnt, int score, int 
 		// currently the program investigates some of them 
 		// the amount of the candidate can be calibrated
 		//printf("depth:%d,player:%d,score:%d,alpha,beta:%d,%d\n", depth, player, score, alpha, beta);
-		//printf("%d\n", prev.size());
+		//printf("%d\n---prev---\n", prev.size());
+		for (unsigned int i = 0; i < prev.size(); i++) {
+			//printf("(%d,%d) (%d,%d)\n", prev[i].first.x, prev[i].first.y, prev[i].second.x, prev[i].second.y);
+		}
 		int color = (player == COLOR_OURS) ? 1 : -1;
 		int ret = -color * INF;
 
 		//stores the candidates
 		std::priority_queue<data, std::vector<data>, CompData> pq;
 
-		std::pair<point, int> OurFour = isOurFourExist(player);
-		if (OurFour.second != -1) {
+		isFourExist(player);
+		/*for (int i = 0; i < 3; i++) {
+			printf("%d : ", i);
+			for (unsigned int j = 0; j<sol[i].size(); j++)
+				printf("%d %d %d ///", sol[i][j].p.x, sol[i][j].p.y, sol[i][j].dir);
+			printf("\n");
+		}*/
+		if (sol[2][0].dir != -1) {
 			point p[2];
 			int cnt = 0;
 			for (int j = 0; j < LENGTH; j++) {
-				int nx = OurFour.first.x + dx[OurFour.second] * j;
-				int ny = OurFour.first.y + dy[OurFour.second] * j;
+				int nx = sol[2][0].p.x + dx[sol[2][0].dir] * j;
+				int ny = sol[2][0].p.y + dy[sol[2][0].dir] * j;
 				if (board[nx][ny] == 0) {
-					p[cnt++] = { nx,ny,OurFour.first.c };
+					p[cnt++] = { nx,ny,sol[2][0].p.c };
 				}
 			}
 			if (cnt == 1) {
 				for (int x = 0; x < BOARD_SIZE; x++) {
 					for (int y = 0; y < BOARD_SIZE; y++) {
 						if (board[x][y] == 0) {
-							p[cnt] = { x,y,OurFour.first.c };
+							p[cnt] = { x,y,sol[2][0].p.c };
 						}
 					}
 				}
 			}
+			//printf("i win\n");
 			ret = color * 10000;
 			//printf("depth:%d,(%d,%d) (%d,%d) %d (%d,%d)\n", depth, p[0].x, p[0].y, p[1].x, p[1].y, 10000, alpha, beta);
 
@@ -644,31 +547,54 @@ int alphabeta(int depth, const int player, const int player_cnt, int score, int 
 			//printf("ret = %d\n", ret);
 			return ret;
 		}
-		std::pair<int, std::pair<point, int>> OppFour[2];
-		OppFour[0] = isOppFourExist(prev.back().first);
-		OppFour[1] = isOppFourExist(prev.back().second);
 
-		//printf("%d %d %d %d\n", prev.back().first.x, prev.back().first.y, prev.back().second.x, prev.back().second.y);
-		//printf("%d %d %d %d %d %d\n", OppFour[0].first, OppFour[0].second.first.x, OppFour[0].second.first.y, OppFour[1].first, OppFour[1].second.first.x, OppFour[1].second.first.y);
-		for (int i = 0; i < 2; i++) { // prevent with two stones now or lose
-			if (OppFour[i].first >= 3) { //opp can make 6 stones
-				point p = OppFour[i].second.first;
-				int dir = OppFour[i].second.second;
+		for (int num = 0; num < 2; num++) { // prevent with two stones now or lose
+			//printf("num=%d\n", num);
+			int cnt_dir[3] = { 0,0,0 };
+			int cnt = -1;
+			int dir = -1;
+			int three = -1;
+			int last = 0;
+			for (unsigned int i = 0; i < sol[num].size(); i++) {
+				int newdir = sol[num][i].dir;
+				if (dir != newdir)
+					cnt++;
+				cnt_dir[cnt]++;
+				dir = newdir;
+			}
+			for (int i = 0; i < 3; i++) {
+				if (cnt_dir[i] >= 3) {
+					three = i;
+					for (int j = 0; j < three; j++) {
+						last += cnt_dir[j];
+					}
+				}
+			}
+			//printf("cnt_dir %d %d %d\n", cnt_dir[0], cnt_dir[1], cnt_dir[2]);
+			//printf("%d %d %d %d\n", cnt + 1, dir, three, last);
+			if (three != -1) { //opp can make 6 stones
+				//printf("three");
+				point p = sol[num][last].p;
+				int dir = sol[num][last].dir;
+				//printf("%d %d %d\n", p.x, p.y, dir);
 				point Must1[2];
 				point Must2[2];
 				int cnt1 = 0;
 				int cnt2 = 0;
 				int pos[4] = { -2,-1,4,5 };
 				for (int i = 0; i < 4; i++) {
+					int nx = p.x + dx[dir] * pos[i];
+					int ny = p.y + dy[dir] * pos[i];
 					if (i < 2) {
-						if (is_valid(p.x + dx[dir] * pos[i], p.y + dy[dir] * pos[i]) && board[p.x + dx[dir] * pos[i]][p.y + dy[dir] * pos[i]] == 0)
-							Must1[cnt1++] = { p.x + dx[dir] * pos[i],p.y + dy[dir] * pos[i],p.c };
+						if (is_valid(nx, ny) && board[nx][ny] == 0)
+							Must1[cnt1++] = { nx,ny,p.c };
 					}
 					else {
-						if (is_valid(p.x + dx[dir] * pos[i], p.y + dy[dir] * pos[i]) && board[p.x + dx[dir] * pos[i]][p.y + dy[dir] * pos[i]] == 0)
-							Must2[cnt2++] = { p.x + dx[dir] * pos[i],p.y + dy[dir] * pos[i],p.c };
+						if (is_valid(nx, ny) && board[nx][ny] == 0)
+							Must2[cnt2++] = { nx,ny,p.c };
 					}
 				}
+				//printf("%d %d", cnt1, cnt2);
 				for (int z1 = 0; z1 < cnt1; z1++)
 				{
 					int x1 = Must1[z1].x;
@@ -695,6 +621,7 @@ int alphabeta(int depth, const int player, const int player_cnt, int score, int 
 
 				for (int z = 0; z < cnt1*cnt2; z++)
 				{
+					//printf("one 4 stones prevent from 2 stones\n");
 					data dat = pq.top();
 					pq.pop();
 					int x1 = Must1[dat.z1].x;
@@ -712,9 +639,9 @@ int alphabeta(int depth, const int player, const int player_cnt, int score, int 
 					board[x1][y1] = 0;
 					board[x2][y2] = 0;
 					if (player == COLOR_OURS)
-						ret = max(ret, dat.score + weight * val);
+						ret = max(ret, dat.score + (int)(weight * val));
 					else
-						ret = min(ret, -dat.score + weight * val);
+						ret = min(ret, -dat.score + (int)(weight * val));
 
 					//printf("ret = %d\n", ret);
 					if (feedback && alpha < ret)
@@ -734,13 +661,52 @@ int alphabeta(int depth, const int player, const int player_cnt, int score, int 
 				}
 				return ret;
 			}
+			else if (cnt + 1 >= 2) {
+				int x[2], y[2], cnt = cnt_dir[0] - 1;
+				for (int i = 0; i < 2; i++) {
+					for (int j = 0; j < LENGTH; j++) {
+						int nx = sol[num][cnt].p.x + dx[sol[num][cnt].dir] * j;
+						int ny = sol[num][cnt].p.y + dy[sol[num][cnt].dir] * j;
+						if (is_valid(nx, ny) && board[nx][ny] == 0) {
+							x[i] = nx;
+							y[i] = ny;
+							//printf("%d %d \n", x[i], y[i]);
+							break;
+						}
+					}
+					board[x[i]][y[i]] = player;
+					cnt += cnt_dir[1];
+				}
+				//printf("2 each 4 stones prevent from 1 stone\n");
+				int offset = compute_score({ x[0], y[0], player }) + compute_score({ x[1],y[1],player });
+				//printf("depth:%d,(%d,%d) (%d,%d) %d (%d,%d)\n", depth, x[0], y[0], x[1], y[1], color*offset, alpha, beta);
+				prev.push_back(std::pair<point, point>({ x[0], y[0], player }, { x[1], y[1], player }));
+				int val = alphabeta(depth - 2, 3 - player, 2, color*offset, alpha, beta, false);
+				if (isTimeExceeded) return 0;
+				prev.pop_back();
+				board[x[0]][y[0]] = 0;
+				board[x[1]][y[1]] = 0;
+				if (player == COLOR_OURS)
+					ret = max(ret, offset + (int)(weight * val));
+				else
+					ret = min(ret, -offset + (int)(weight * val));
+
+				//printf("ret = %d\n", ret);
+				if (feedback && alpha < ret)
+				{
+					p1 = { x[0], y[0] };
+					p2 = { x[1], y[1] };
+				}
+				return ret;
+			}
 		}
-		if (OppFour[0].first >= 1 && OppFour[1].first >= 1 && !(OppFour[0].second.first.x == OppFour[1].second.first.x && OppFour[0].second.first.y == OppFour[1].second.first.y)) {
+
+		if (sol[0].size() >= 1 && sol[1].size() >= 1 && !(sol[0][0].p.x == sol[1][0].p.x && sol[0][0].p.y == sol[1][0].p.y)) {
 			int x[2], y[2];
 			for (int i = 0; i < 2; i++) {
 				for (int j = 0; j < LENGTH; j++) {
-					int nx = OppFour[i].second.first.x + dx[OppFour[i].second.second] * j;
-					int ny = OppFour[i].second.first.y + dy[OppFour[i].second.second] * j;
+					int nx = sol[i][sol[i].size() - 1].p.x + dx[sol[i][sol[i].size() - 1].dir] * j;
+					int ny = sol[i][sol[i].size() - 1].p.y + dy[sol[i][sol[i].size() - 1].dir] * j;
 					if (is_valid(nx, ny) && board[nx][ny] == 0) {
 						x[i] = nx;
 						y[i] = ny;
@@ -751,6 +717,7 @@ int alphabeta(int depth, const int player, const int player_cnt, int score, int 
 
 				board[x[i]][y[i]] = player;
 			}
+			//printf("2 4 stones prevent from 2 stones\n");
 			int offset = compute_score({ x[0], y[0], player }) + compute_score({ x[1],y[1],player });
 			//printf("depth:%d,(%d,%d) (%d,%d) %d (%d,%d)\n", depth, x[0], y[0], x[1], y[1], color*offset, alpha, beta);
 			prev.push_back(std::pair<point, point>({ x[0], y[0], player }, { x[1], y[1], player }));
@@ -760,9 +727,9 @@ int alphabeta(int depth, const int player, const int player_cnt, int score, int 
 			board[x[0]][y[0]] = 0;
 			board[x[1]][y[1]] = 0;
 			if (player == COLOR_OURS)
-				ret = max(ret, offset + weight * val);
+				ret = max(ret, offset + (int)(weight * val));
 			else
-				ret = min(ret, -offset + weight * val);
+				ret = min(ret, -offset + (int)(weight * val));
 
 			//printf("ret = %d\n", ret);
 			if (feedback && alpha < ret)
@@ -773,13 +740,13 @@ int alphabeta(int depth, const int player, const int player_cnt, int score, int 
 			return ret;
 		}
 		for (int i = 0; i<2; i++) { // prevent with one stone now or lose
-			if (OppFour[i].first == 1 || OppFour[i].first == 2) {
+			if (sol[i].size() == 1 || sol[i].size() == 2) {
 				point p;
 				for (int j = 0; j < LENGTH; j++) {
-					int nx = OppFour[i].second.first.x + dx[OppFour[i].second.second] * j;
-					int ny = OppFour[i].second.first.y + dy[OppFour[i].second.second] * j;
+					int nx = sol[i][0].p.x + dx[sol[i][0].dir] * j;
+					int ny = sol[i][0].p.y + dy[sol[i][0].dir] * j;
 					if (is_valid(nx, ny) && board[nx][ny] == 0) {
-						p = { nx,ny,OppFour[i].second.first.c };
+						p = { nx,ny,sol[i][0].p.c };
 						break;
 					}
 				}
@@ -799,7 +766,7 @@ int alphabeta(int depth, const int player, const int player_cnt, int score, int 
 					board[x2][y2] = player;
 					int offset2 = compute_score({ x2, y2, player });
 
-					if (pq.size() < cand_size)
+					if (pq.size() < (unsigned int)cand_size)
 						pq.push({ 1, z2, offset1 + offset2 });
 
 					if ((pq.top()).score < offset1 + offset2) {
@@ -812,6 +779,7 @@ int alphabeta(int depth, const int player, const int player_cnt, int score, int 
 
 				for (int z = 0; z < cand_size; z++)
 				{
+					//printf("one 4 stone prevent from one stone : %d\n", z);
 					data dat = pq.top();
 					pq.pop();
 					int x1 = p.x;
@@ -831,10 +799,10 @@ int alphabeta(int depth, const int player, const int player_cnt, int score, int 
 					board[x1][y1] = 0;
 					board[x2][y2] = 0;
 					if (player == COLOR_OURS)
-						ret = max(ret, dat.score + weight * val);
+						ret = max(ret, dat.score + (int)(weight * val));
 					else
-						ret = min(ret, -dat.score + weight * val);
-					//printf("ret = %d\n", color*dat.score + val);
+						ret = min(ret, -dat.score + (int)(weight * val));
+					//printf("ret = %d\n", ret);
 
 					if (feedback && alpha < ret)
 					{
@@ -844,16 +812,21 @@ int alphabeta(int depth, const int player, const int player_cnt, int score, int 
 
 					if (player == COLOR_OURS) {
 						alpha = max(alpha, ret);
-						if (beta <= alpha + score) break;
+						if (beta <= alpha + score) {
+							//printf("%d %d\n", beta, alpha + score); break;
+						}
 					}
 					else {
 						beta = min(beta, ret);
-						if (beta + score <= alpha) break;
+						if (beta + score <= alpha) {
+							//printf("%d %d\n", beta + score, alpha); break;
+						}
 					}
 				}
 				return ret;
 			}
 		}
+
 		for (int z1 = 0; z1 < BOARD_SIZE * BOARD_SIZE; z1++)
 		{
 			int x1 = order[z1].x;
@@ -872,7 +845,7 @@ int alphabeta(int depth, const int player, const int player_cnt, int score, int 
 				board[x2][y2] = player;
 				int offset2 = compute_score({ x2, y2, player });
 
-				if (pq.size() < cand_size)
+				if (pq.size() < (unsigned int)cand_size)
 					pq.push({ z1, z2, offset1 + offset2 });
 
 				if ((pq.top()).score < offset1 + offset2) {
@@ -886,6 +859,7 @@ int alphabeta(int depth, const int player, const int player_cnt, int score, int 
 
 		for (int z = 0; z < cand_size; z++)
 		{
+			//printf("nothing\n");
 			data dat = pq.top();
 			pq.pop();
 			int x1 = order[dat.z1].x;
@@ -905,9 +879,9 @@ int alphabeta(int depth, const int player, const int player_cnt, int score, int 
 			board[x1][y1] = 0;
 			board[x2][y2] = 0;
 			if (player == COLOR_OURS)
-				ret = max(ret, dat.score + weight * val);
+				ret = max(ret, dat.score + (int)(weight * val));
 			else
-				ret = min(ret, -dat.score + weight * val);
+				ret = min(ret, -dat.score + (int)(weight * val));
 
 			//printf("ret = %d\n", ret);
 			if (feedback && alpha < ret)
@@ -918,11 +892,15 @@ int alphabeta(int depth, const int player, const int player_cnt, int score, int 
 
 			if (player == COLOR_OURS) {
 				alpha = max(alpha, ret);
-				if (beta <= alpha + score) break;
+				if (beta <= alpha + score) {
+					//printf("%d %d", beta, alpha + score); break;
+				}
 			}
 			else {
 				beta = min(beta, ret);
-				if (beta + score <= alpha) break;
+				if (beta + score <= alpha) {
+					//printf("%d %d", beta + score, alpha); break;
+				}
 			}
 		}
 		return ret;
