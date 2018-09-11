@@ -50,13 +50,7 @@ char info[] = { "TeamName:5목할래요 ,Department:한가협" };
 #include <stdlib.h>
 #include <queue>
 #include <chrono>
-
-// uncomment the below macro to debug via console or user input
-//#define SECRET_AGENCY_DEBUG_MODE
-
-#ifndef SECRET_AGENCY_DEBUG_MODE
 #include "Connect6Algo.h"
-#endif
 
 const int BOARD_SIZE = 19;
 const int LENGTH = 6;
@@ -68,7 +62,7 @@ const int COLOR_BLOCK = 3;
 
 const int MAX_DEPTH = 6;
 int cand_size = 8;
-const double weight = 1.3;
+const double weight = 1;
 
 extern int limitTime;
 std::chrono::system_clock::time_point start_time;
