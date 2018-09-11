@@ -60,8 +60,7 @@ const int COLOR_OURS = 1;
 const int COLOR_OPPS = 2;
 const int COLOR_BLOCK = 3;
 
-const int MAX_DEPTH = 6;
-int cand_size = 5;
+int cand_size = 4;
 const double weight = 1;
 
 extern int limitTime;
@@ -89,12 +88,13 @@ typedef struct stones {
 	int dir;
 }stones_4;
 
-// status of the boardA
+// status of the board
 int board[BOARD_SIZE][BOARD_SIZE];
 int realboard[BOARD_SIZE][BOARD_SIZE];
+
 // weight of adding our connected components
-int myscore[LENGTH + 1] = { 0,1,6,10,45,0,0 };
-int opscore[LENGTH + 1] = { 0,0,8,12,0,0,0 };
+int myscore[LENGTH + 1] = { 0,1,6,12,45,30,0 };
+int opscore[LENGTH + 1] = { 0,3,9,12,0,0,0 };
 
 
 // directions of mok
@@ -735,69 +735,95 @@ int alphabeta(int depth, const int player, const int player_cnt, int score, int 
 		}
 		for (int i = 0; i<2; i++) { // prevent with one stone now or lose
 			if (sol[i].size() == 1 || sol[i].size() == 2) {
-				point p;
+				point Must[5];
+				int cnt = 0;
 				for (int j = 0; j < LENGTH; j++) {
 					int nx = sol[i][0].p.x + dx[sol[i][0].dir] * j;
 					int ny = sol[i][0].p.y + dy[sol[i][0].dir] * j;
 					if (is_valid(nx, ny) && board[nx][ny] == 0) {
-						p = { nx,ny,sol[i][0].p.c };
-						break;
+						Must[cnt++] = { nx,ny,sol[i][0].p.c };
 					}
 				}
-				int x1 = p.x;
-				int y1 = p.y;
-				if (board[x1][y1]) continue;
-
-				board[x1][y1] = player;
-				int offset1 = compute_score({ x1, y1, player });
-
-				for (int z2 = 0; z2 < BOARD_SIZE * BOARD_SIZE; z2++)
+				int repo[5][2] = { 0, };
+				//printf("%d %d", cnt1, cnt2);
+				for (int z1 = 0; z1 < cnt; z1++)
 				{
-					int x2 = order[z2].x;
-					int y2 = order[z2].y;
-					if (board[x2][y2]) continue;
+					int x1 = Must[z1].x;
+					int y1 = Must[z1].y;
+					if (board[x1][y1]) continue;
 
-					board[x2][y2] = player;
-					int offset2 = compute_score({ x2, y2, player });
+					board[x1][y1] = player;
+					int offset1 = compute_score({ x1, y1, player });
 
-					if (pq.size() < (unsigned int)cand_size)
-						pq.push({ 1, z2, offset1 + offset2 });
+					for (int z2 = 0; z2 < BOARD_SIZE * BOARD_SIZE; z2++)
+					{
+						int x2 = order[z2].x;
+						int y2 = order[z2].y;
+						if (board[x2][y2]) continue;
+						for (int t = 0; t < cnt; t++) {
+							if (Must[t].x == x2 && Must[t].y == y2) continue;
+						}
+						board[x2][y2] = player;
+						int offset2 = compute_score({ x2, y2, player });
+						if (repo[z1][1] < offset1+offset2) {
+							repo[z1][0] = z2;
+							repo[z1][1] = offset1+offset2;
+						}
+						if (pq.size() < (unsigned int)cand_size)
+							pq.push({ z1, z2, offset1 + offset2 });
 
-					if ((pq.top()).score < offset1 + offset2) {
-						pq.pop();
-						pq.push({ 1, z2, offset1 + offset2 });
+						else if ((pq.top()).score < offset1 + offset2) {
+							pq.pop();
+							pq.push({ z1, z2, offset1 + offset2 });
+						}
+						board[x2][y2] = 0;
 					}
-					board[x2][y2] = 0;
+					board[x1][y1] = 0;
 				}
-				board[x1][y1] = 0;
-
-				for (int z = 0; z < cand_size; z++)
+				std::vector<data> repodata;
+				for (int t = 0; t < cand_size; t++) {
+					repodata.push_back(pq.top());
+					pq.pop();
+				}
+				for (int t = 0; t < cnt; t++) {
+					bool  check = true;
+					for (int j = 0; j < repodata.size(); j++) {
+						if (t == repodata[j].z1) {
+							check = false;
+							break;
+						}
+					}
+					if (check) {
+						repodata.push_back({ t,repo[t][0],repo[t][1] });
+					}
+				}
+				for (int t = 0; t < repodata.size(); t++)
+					pq.push(repodata[t]);
+				for (int z = 0; z < repodata.size(); z++)
 				{
-					//printf("one 4 stone prevent from one stone : %d\n", z);
+					//printf("one 4 stones prevent from 1 stone\n");
 					data dat = pq.top();
 					pq.pop();
-					int x1 = p.x;
-					int y1 = p.y;
+					int x1 = Must[dat.z1].x;
+					int y1 = Must[dat.z1].y;
 					board[x1][y1] = player;
 
 					int x2 = order[dat.z2].x;
 					int y2 = order[dat.z2].y;
 					board[x2][y2] = player;
-					//printf("depth:%d,(%d,%d) (%d,%d) %d (%d,%d)\n", depth, p.x, p.y, x2, y2, color*dat.score, alpha, beta);
-
+					//printf("depth:%d,(%d,%d) (%d,%d) %d (%d,%d)\n", depth, x1, y1, x2, y2, color*dat.score, alpha, beta);
 					prev.push_back(std::pair<point, point>({ x1, y1, player }, { x2, y2, player }));
 					int val = alphabeta(depth - 2, 3 - player, 2, color*dat.score, alpha, beta, false);
 					if (isTimeExceeded) return 0;
 					prev.pop_back();
-
 					board[x1][y1] = 0;
 					board[x2][y2] = 0;
 					if (player == COLOR_OURS)
 						ret = max(ret, dat.score + (int)(weight * val));
 					else
 						ret = min(ret, -dat.score + (int)(weight * val));
-					//printf("ret = %d\n", ret);
 
+					//printf("ret = %d\n", ret);
 					if (feedback && alpha < ret)
 					{
 						p1 = { x1, y1 };
@@ -806,15 +832,11 @@ int alphabeta(int depth, const int player, const int player_cnt, int score, int 
 
 					if (player == COLOR_OURS) {
 						alpha = max(alpha, ret);
-						if (beta <= alpha + score) {
-							//printf("%d %d\n", beta, alpha + score); break;
-						}
+						if (beta <= alpha + score) break;
 					}
 					else {
 						beta = min(beta, ret);
-						if (beta + score <= alpha) {
-							//printf("%d %d\n", beta + score, alpha); break;
-						}
+						if (beta + score <= alpha) break;
 					}
 				}
 				return ret;
@@ -842,7 +864,7 @@ int alphabeta(int depth, const int player, const int player_cnt, int score, int 
 				if (pq.size() < (unsigned int)cand_size)
 					pq.push({ z1, z2, offset1 + offset2 });
 
-				if ((pq.top()).score < offset1 + offset2) {
+				else if ((pq.top()).score < offset1 + offset2) {
 					pq.pop();
 					pq.push({ z1, z2, offset1 + offset2 });
 				}
@@ -851,7 +873,7 @@ int alphabeta(int depth, const int player, const int player_cnt, int score, int 
 			board[x1][y1] = 0;
 		}
 
-		for (int z = 0; z < cand_size; z++)
+		for (int z = 0; z < (unsigned int)cand_size; z++)
 		{
 			//printf("nothing\n");
 			data dat = pq.top();
@@ -887,13 +909,13 @@ int alphabeta(int depth, const int player, const int player_cnt, int score, int 
 			if (player == COLOR_OURS) {
 				alpha = max(alpha, ret);
 				if (beta <= alpha + score) {
-					//printf("%d %d", beta, alpha + score); break;
+					break;
 				}
 			}
 			else {
 				beta = min(beta, ret);
 				if (beta + score <= alpha) {
-					//printf("%d %d", beta + score, alpha); break;
+					break;
 				}
 			}
 		}
@@ -947,7 +969,7 @@ void myturn(int cnt) {
 	updateOrder();
 
 	if (mode == 1) {
-		for (int depth = 0; depth <= 10; depth += 2) {
+		for (int depth = 6; depth <= 10; depth += 2) {
 			copy_board();
 			alphabeta(cnt + depth, COLOR_OURS, cnt, 0, -INF, INF, true);
 			if (isTimeExceeded) break;
