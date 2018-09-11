@@ -61,7 +61,7 @@ const int COLOR_OPPS = 2;
 const int COLOR_BLOCK = 3;
 
 const int MAX_DEPTH = 6;
-int cand_size = 8;
+int cand_size = 5;
 const double weight = 1;
 
 extern int limitTime;
@@ -93,7 +93,7 @@ typedef struct stones {
 int board[BOARD_SIZE][BOARD_SIZE];
 int realboard[BOARD_SIZE][BOARD_SIZE];
 // weight of adding our connected components
-int myscore[LENGTH + 1] = { 0,1,6,10,100,0,0 };
+int myscore[LENGTH + 1] = { 0,1,6,10,45,0,0 };
 int opscore[LENGTH + 1] = { 0,0,8,12,0,0,0 };
 
 
@@ -339,17 +339,17 @@ void isFourExist(int player) { //mode=1-> my four stones, mode=2-> opp four ston
 					int cnt = 0;
 					for (int k = 0; k < 6; k++) {
 						int color = board[x + k * dx[dir]][y + k * dy[dir]];
-						if (color == (player + mode) % 2 + 2) cnt++; //COLOR_OURS
-						else if (color == 1 - (player + mode) % 2) { cnt = 0; break; } //COLOR_OPPS
+						if (color == 2 - (player + mode) % 2) cnt++; //COLOR_OURS
+						else if (color == 1 + (player + mode) % 2) { cnt = 0; break; } //COLOR_OPPS
 						else if (color == COLOR_BLOCK) cnt++;
 					}
 					/*if (is_valid(x + (-1) * dx[dir], y + (-1) * dy[dir]) && board[x + (-1) * dx[dir]][y + (-1) * dy[dir]] == ((player + mode) % 2 + 2))
-						cnt = 0;
+					cnt = 0;
 					if (is_valid(x + 6 * dx[dir], y + 6 * dy[dir]) && board[x + 6 * dx[dir]][y + 6 * dy[dir]] == ((player + mode) % 2 + 2)) // prevent 7 stones
-						cnt = 0;*/
+					cnt = 0;*/
 					//printf("%d (%d,%d) (%d,%d) %d\n", i, x, y, nx, ny, cnt);
 					if (cnt >= 4) {
-						var.p = { x,y,(player + mode) % 2 + 2 };
+						var.p = { x,y,2 - (player + mode) % 2 };
 						var.dir = dir;
 						if (mode == 0) {
 							sol[2].push_back(var);
@@ -505,10 +505,10 @@ int alphabeta(int depth, const int player, const int player_cnt, int score, int 
 
 		isFourExist(player);
 		/*for (int i = 0; i < 3; i++) {
-			printf("%d : ", i);
-			for (unsigned int j = 0; j<sol[i].size(); j++)
-				printf("%d %d %d ///", sol[i][j].p.x, sol[i][j].p.y, sol[i][j].dir);
-			printf("\n");
+		printf("%d : ", i);
+		for (unsigned int j = 0; j<sol[i].size(); j++)
+		printf("%d %d %d ///", sol[i][j].p.x, sol[i][j].p.y, sol[i][j].dir);
+		printf("\n");
 		}*/
 		if (sol[2][0].dir != -1) {
 			point p[2];
@@ -543,7 +543,7 @@ int alphabeta(int depth, const int player, const int player_cnt, int score, int 
 		}
 
 		for (int num = 0; num < 2; num++) { // prevent with two stones now or lose
-			//printf("num=%d\n", num);
+											//printf("num=%d\n", num);
 			int cnt_dir[3] = { 0,0,0 };
 			int cnt = -1;
 			int dir = -1;
@@ -567,7 +567,7 @@ int alphabeta(int depth, const int player, const int player_cnt, int score, int 
 			//printf("cnt_dir %d %d %d\n", cnt_dir[0], cnt_dir[1], cnt_dir[2]);
 			//printf("%d %d %d %d\n", cnt + 1, dir, three, last);
 			if (three != -1) { //opp can make 6 stones
-				//printf("three");
+							   //printf("three");
 				point p = sol[num][last].p;
 				int dir = sol[num][last].dir;
 				//printf("%d %d %d\n", p.x, p.y, dir);
@@ -656,7 +656,7 @@ int alphabeta(int depth, const int player, const int player_cnt, int score, int 
 				return ret;
 			}
 			else if (cnt + 1 >= 2) {
-				int x[2], y[2], cnt = cnt_dir[0] - 1;
+				int x[2], y[2], cnt = 0;
 				for (int i = 0; i < 2; i++) {
 					for (int j = 0; j < LENGTH; j++) {
 						int nx = sol[num][cnt].p.x + dx[sol[num][cnt].dir] * j;
@@ -669,7 +669,7 @@ int alphabeta(int depth, const int player, const int player_cnt, int score, int 
 						}
 					}
 					board[x[i]][y[i]] = player;
-					cnt += cnt_dir[1];
+					cnt += cnt_dir[0];
 				}
 				//printf("2 each 4 stones prevent from 1 stone\n");
 				int offset = compute_score({ x[0], y[0], player }) + compute_score({ x[1],y[1],player });
@@ -699,8 +699,8 @@ int alphabeta(int depth, const int player, const int player_cnt, int score, int 
 			int x[2], y[2];
 			for (int i = 0; i < 2; i++) {
 				for (int j = 0; j < LENGTH; j++) {
-					int nx = sol[i][sol[i].size() - 1].p.x + dx[sol[i][sol[i].size() - 1].dir] * j;
-					int ny = sol[i][sol[i].size() - 1].p.y + dy[sol[i][sol[i].size() - 1].dir] * j;
+					int nx = sol[i][0].p.x + dx[sol[i][0].dir] * j;
+					int ny = sol[i][0].p.y + dy[sol[i][0].dir] * j;
 					if (is_valid(nx, ny) && board[nx][ny] == 0) {
 						x[i] = nx;
 						y[i] = ny;
