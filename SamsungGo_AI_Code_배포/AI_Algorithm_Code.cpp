@@ -60,8 +60,9 @@ const int COLOR_OURS = 1;
 const int COLOR_OPPS = 2;
 const int COLOR_BLOCK = 3;
 
-int cand_size = 4;
-const double weight = 1;
+int cand_size = 6;
+int cand_point_size = 100;
+const double weight = 0.9;
 
 extern int limitTime;
 std::chrono::system_clock::time_point start_time;
@@ -419,6 +420,11 @@ void update_board()
 		realprev[1].second.y = realprev[1].first.y;
 		realprev[1].second.c = realprev[1].first.c;
 	}
+	if (prevOurStones == 1) {
+		realprev[0].second.x = realprev[0].first.x;
+		realprev[0].second.y = realprev[0].first.y;
+		realprev[0].second.c = realprev[0].first.c;
+	}
 }
 
 void copy_board() {
@@ -439,7 +445,8 @@ void copy_board() {
 	}
 }
 //test
-std::vector<point> order;
+std::vector<point> order[20];
+void updateOrder(int depth);
 // alpha-beta by the difference and a bit of greedy
 int alphabeta(int depth, const int player, const int player_cnt, int score, int alpha, int beta, const bool feedback)
 {
@@ -454,14 +461,15 @@ int alphabeta(int depth, const int player, const int player_cnt, int score, int 
 	{
 		return 0;
 	}
+	updateOrder(depth);
 	//use this code when play the first stone
 	if (player_cnt == 1)
 	{
 		int ret = -INF;
 		for (int z = 0; z < BOARD_SIZE * BOARD_SIZE; z++)
 		{
-			int x = order[z].x;
-			int y = order[z].y;
+			int x = order[depth][z].x;
+			int y = order[depth][z].y;
 			if (board[x][y]) continue;
 
 			board[x][y] = player;
@@ -470,7 +478,7 @@ int alphabeta(int depth, const int player, const int player_cnt, int score, int 
 			if (x <= 1 || x >= 17 || y <= 1 || y >= 17) offset = 0;
 
 			board[x][y] = 0;
-			//should make maximal cost,, ret is v in psuedo code      
+			//should make maximal cost,, ret is v in psuedo code
 			ret = max(ret, offset);
 
 			if (feedback && alpha < ret)
@@ -755,19 +763,19 @@ int alphabeta(int depth, const int player, const int player_cnt, int score, int 
 					board[x1][y1] = player;
 					int offset1 = compute_score({ x1, y1, player });
 
-					for (int z2 = 0; z2 < BOARD_SIZE * BOARD_SIZE; z2++)
+					for (int z2 = 0; z2 < cand_point_size; z2++)
 					{
-						int x2 = order[z2].x;
-						int y2 = order[z2].y;
+						int x2 = order[depth][z2].x;
+						int y2 = order[depth][z2].y;
 						if (board[x2][y2]) continue;
 						for (int t = 0; t < cnt; t++) {
 							if (Must[t].x == x2 && Must[t].y == y2) continue;
 						}
 						board[x2][y2] = player;
 						int offset2 = compute_score({ x2, y2, player });
-						if (repo[z1][1] < offset1+offset2) {
+						if (repo[z1][1] < offset1 + offset2) {
 							repo[z1][0] = z2;
-							repo[z1][1] = offset1+offset2;
+							repo[z1][1] = offset1 + offset2;
 						}
 						if (pq.size() < (unsigned int)cand_size)
 							pq.push({ z1, z2, offset1 + offset2 });
@@ -808,8 +816,8 @@ int alphabeta(int depth, const int player, const int player_cnt, int score, int 
 					int y1 = Must[dat.z1].y;
 					board[x1][y1] = player;
 
-					int x2 = order[dat.z2].x;
-					int y2 = order[dat.z2].y;
+					int x2 = order[depth][dat.z2].x;
+					int y2 = order[depth][dat.z2].y;
 					board[x2][y2] = player;
 					//printf("depth:%d,(%d,%d) (%d,%d) %d (%d,%d)\n", depth, x1, y1, x2, y2, color*dat.score, alpha, beta);
 					prev.push_back(std::pair<point, point>({ x1, y1, player }, { x2, y2, player }));
@@ -843,19 +851,19 @@ int alphabeta(int depth, const int player, const int player_cnt, int score, int 
 			}
 		}
 
-		for (int z1 = 0; z1 < BOARD_SIZE * BOARD_SIZE; z1++)
+		for (int z1 = 0; z1 < cand_point_size; z1++)
 		{
-			int x1 = order[z1].x;
-			int y1 = order[z1].y;
+			int x1 = order[depth][z1].x;
+			int y1 = order[depth][z1].y;
 			if (board[x1][y1]) continue;
 
 			board[x1][y1] = player;
 			int offset1 = compute_score({ x1, y1, player });
 
-			for (int z2 = z1 + 1; z2 < BOARD_SIZE * BOARD_SIZE; z2++)
+			for (int z2 = z1 + 1; z2 < cand_point_size; z2++)
 			{
-				int x2 = order[z2].x;
-				int y2 = order[z2].y;
+				int x2 = order[depth][z2].x;
+				int y2 = order[depth][z2].y;
 				if (board[x2][y2]) continue;
 
 				board[x2][y2] = player;
@@ -878,12 +886,12 @@ int alphabeta(int depth, const int player, const int player_cnt, int score, int 
 			//printf("nothing\n");
 			data dat = pq.top();
 			pq.pop();
-			int x1 = order[dat.z1].x;
-			int y1 = order[dat.z1].y;
+			int x1 = order[depth][dat.z1].x;
+			int y1 = order[depth][dat.z1].y;
 			board[x1][y1] = player;
 
-			int x2 = order[dat.z2].x;
-			int y2 = order[dat.z2].y;
+			int x2 = order[depth][dat.z2].x;
+			int y2 = order[depth][dat.z2].y;
 			board[x2][y2] = player;
 			//printf("depth:%d,(%d,%d) (%d,%d) %d (%d,%d)\n", depth, order[dat.z1].x, order[dat.z1].y, order[dat.z2].x, order[dat.z2].y, color*dat.score, alpha, beta);
 			//printf("data.score = %d\n", dat.score);
@@ -927,7 +935,7 @@ bool compDist(point p1, point p2) {
 	return distFromMid[p1.x][p1.y] < distFromMid[p2.x][p2.y];
 }
 
-void updateOrder() {
+void updateOrder(int depth) {
 	double mid_y = 0, mid_x = 0;
 	int stone_number = 0;
 	for (int i = 0; i < BOARD_SIZE; i++) {
@@ -943,10 +951,12 @@ void updateOrder() {
 	mid_x /= stone_number;
 
 	for (int i = 0; i < BOARD_SIZE; i++)
-		for (int j = 0; j < BOARD_SIZE; j++)
-			distFromMid[i][j] = abs(mid_x - i) + abs(mid_y - j);
+		for (int j = 0; j < BOARD_SIZE; j++) {
+			if (board[i][j]) distFromMid[i][j] = INF;
+			else distFromMid[i][j] = abs(mid_x - i) + abs(mid_y - j);
+		}
 
-	sort(order.begin(), order.end(), compDist);
+	sort(order[depth].begin(), order[depth].end(), compDist);
 }
 
 void myturn(int cnt) {
@@ -959,17 +969,16 @@ void myturn(int cnt) {
 		srand((time_t)time(NULL));
 		for (int i = 0; i < BOARD_SIZE; i++)
 			for (int j = 0; j < BOARD_SIZE; j++)
-				order.push_back({ i, j });
+				for (int k = 0; k<20; k++)
+					order[k].push_back({ i, j });
 	}
 
 	// maybe bfs among the previous stones might be better
 
 	update_board();
 
-	updateOrder();
-
 	if (mode == 1) {
-		for (int depth = 6; depth <= 10; depth += 2) {
+		for (int depth = 4; depth <= 8; depth += 2) {
 			copy_board();
 			alphabeta(cnt + depth, COLOR_OURS, cnt, 0, -INF, INF, true);
 			if (isTimeExceeded) break;
